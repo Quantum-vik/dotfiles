@@ -354,11 +354,11 @@ step_fingerprint() {
 
 # ---------------------------------------------------------------------------
 # Fan modes for HP laptops. The firmware fan curve can't be overridden (hp-wmi has no pwm1 duty value, and the
-# 250R G10 ignores "full speed"), so Quiet lowers CPU heat instead.
+# 250R G10 ignores "full speed"), so Cool and Quiet lower CPU heat instead.
 # Installs the root helper, a polkit policy that lets the active desktop user run it without a password,
-# and a Quick Settings extension with Auto / Quiet. Skipped on other machines.
+# and a Quick Settings extension with Auto / Cool / Quiet. Skipped on other machines.
 step_fan() {
-  log "fan modes: Auto / Quiet in Quick Settings (HP hp-wmi only)"
+  log "fan modes: Auto / Cool / Quiet in Quick Settings (HP hp-wmi only)"
   if ! grep -qsx hp /sys/class/hwmon/hwmon*/name || ! ls /sys/class/hwmon/hwmon*/pwm1_enable >/dev/null 2>&1; then
     info "no hp-wmi fan control on this machine; skipping"; return
   fi

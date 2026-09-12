@@ -2,7 +2,7 @@
 <!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
   "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
 <!-- Lets the person sitting at the laptop switch fan modes with no password prompt.
-     Only /usr/local/sbin/fan-mode is covered, and it accepts only status|auto|quiet.
+     Only /usr/local/sbin/fan-mode is covered, and it accepts only status|auto|cool|quiet.
      Remote (SSH) and inactive sessions still need an admin password. -->
 <policyconfig>
   <action id="local.fan-mode">

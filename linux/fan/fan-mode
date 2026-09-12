@@ -3,11 +3,15 @@
 # pwm1_enable=0 ("full speed") and reads it back, but its EC ignores it; a load test showed the fan still
 # waiting for heat and ramping on the normal curve. The only real lever is how much heat the CPU makes.
 #
-#   fan-mode status            mode=<auto|quiet> rpm=<n> temp=<°C>   (any user)
-#   fan-mode auto|quiet        switch mode (root; the polkit policy lets the desktop user run it via pkexec)
+#   fan-mode status            mode=<auto|cool|quiet> rpm=<n> temp=<°C>   (any user)
+#   fan-mode auto|cool|quiet   switch mode (root; the polkit policy lets the desktop user run it via pkexec)
 #
 #   auto   firmware fan curve, CPU limits back to what they were
-#   quiet  firmware fan curve, but turbo off and a 10 W CPU package limit, so there is less heat to blow away
+#   cool   turbo kept, CPU capped at 15 W sustained / 20 W bursts (stock: none / 41 W)
+#   quiet  turbo off and a 10 W cap: coolest and silent, but much slower
+#
+# Measured on the HP 250R G10 (Core 5 120U), 25 s all-core load:
+#   auto  96 °C avg, 29 W, 100 % throughput | cool  79 °C, 20 W, 82 % | quiet  52 °C, 6 W, 31 %
 #
 # Nothing persists: the firmware fan mode, turbo and CPU power limits all return to normal on reboot.
 # Installed to /usr/local/sbin/fan-mode by ~/dotfiles/linux/install.sh (step: fan).
@@ -15,10 +19,12 @@ set -euo pipefail
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
 
 STATE=/run/fan-mode                  # tmpfs: current mode, gone after reboot
-SAVED=/run/fan-mode.limits           # CPU settings from before quiet mode
+SAVED=/run/fan-mode.limits           # CPU settings from before cool/quiet mode
 RAPL=/sys/class/powercap/intel-rapl:0
 TURBO=/sys/devices/system/cpu/intel_pstate/no_turbo
-QUIET_PL1_UW=10000000
+NO_CAP=999000000000                  # "leave this limit at its original value"
+COOL_PL1_UW=${COOL_PL1_UW:-15000000} # cool: 15 W sustained (this CPU's rated TDP)
+COOL_PL2_UW=${COOL_PL2_UW:-20000000} # cool: 20 W bursts instead of the stock 41 W
 
 find_hwmon() {  # $1 = hwmon name, $2 = file that must exist
   local h
@@ -54,20 +60,32 @@ restore_limits() {
   rm -f "$SAVED"
 }
 
+# Start from the original limits, then cap them: $1 = long-term (PL1) uW, $2 = burst (PL2) uW, $3 = no_turbo.
+# A cap never raises a limit above its original value.
+apply_limits() {
+  local pl1 pl2 turbo
+  restore_limits
+  save_limits
+  read -r pl1 pl2 turbo < "$SAVED"
+  if [ "$1" -lt "$pl1" ]; then pl1=$1; fi
+  if [ "$2" -lt "$pl2" ]; then pl2=$2; fi
+  echo "$pl1" > "$RAPL/constraint_0_power_limit_uw"
+  echo "$pl2" > "$RAPL/constraint_1_power_limit_uw"
+  echo "$3" > "$TURBO"
+}
+
 need_root() { [ "$(id -u)" -eq 0 ] || { echo "fan-mode: run as root (pkexec fan-mode $1)" >&2; exit 1; }; }
 
 case "${1:-status}" in
   status) status ;;
-  auto)
-    need_root auto
-    echo 2 > "$HP/pwm1_enable"; restore_limits; echo auto > "$STATE"; status ;;
-  quiet)
-    need_root quiet
+  auto|cool|quiet)
+    need_root "$1"
     echo 2 > "$HP/pwm1_enable"
-    save_limits
-    echo 1 > "$TURBO"
-    [ "$(cat "$RAPL/constraint_0_power_limit_uw")" -le "$QUIET_PL1_UW" ] \
-      || echo "$QUIET_PL1_UW" > "$RAPL/constraint_0_power_limit_uw"
-    echo quiet > "$STATE"; status ;;
-  *) echo "usage: fan-mode status|auto|quiet" >&2; exit 2 ;;
+    case "$1" in
+      auto)  restore_limits ;;
+      cool)  apply_limits "$COOL_PL1_UW" "$COOL_PL2_UW" 0 ;;
+      quiet) apply_limits 10000000 "$NO_CAP" 1 ;;
+    esac
+    echo "$1" > "$STATE"; status ;;
+  *) echo "usage: fan-mode status|auto|cool|quiet" >&2; exit 2 ;;
 esac

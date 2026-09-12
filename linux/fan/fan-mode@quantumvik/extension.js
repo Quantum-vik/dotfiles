@@ -1,5 +1,5 @@
-// Quick Settings "Fan" toggle: Auto / Quiet, backed by /usr/local/sbin/fan-mode. Clicking the toggle switches
-// between them; the menu shows live fan speed and CPU temperature.
+// Quick Settings "Fan" toggle: Auto / Cool / Quiet, backed by /usr/local/sbin/fan-mode. Clicking the toggle
+// switches between Auto and the last other mode you picked (Cool at first); the menu shows fan speed and CPU temp.
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
@@ -12,8 +12,9 @@ import {QuickMenuToggle, SystemIndicator} from 'resource:///org/gnome/shell/ui/q
 const HELPER = '/usr/local/sbin/fan-mode';
 const ICON = 'weather-windy-symbolic';
 const MODES = {
-    auto: {label: 'Auto', hint: 'Firmware fan curve'},
-    quiet: {label: 'Quiet', hint: 'Turbo off, CPU capped at 10 W'},
+    auto: {label: 'Auto', hint: 'Full speed'},
+    cool: {label: 'Cool', hint: 'CPU capped at 15/20 W'},
+    quiet: {label: 'Quiet', hint: 'Turbo off, 10 W, slow'},
 };
 
 function run(argv) {
@@ -43,6 +44,7 @@ class FanToggle extends QuickMenuToggle {
         super._init({title: 'Fan', iconName: ICON});
         this._indicator = indicator;
         this._mode = 'auto';
+        this._lastOther = 'cool';
         this._pollId = 0;
 
         this.menu.setHeader(ICON, 'Fan Mode');
@@ -57,7 +59,7 @@ class FanToggle extends QuickMenuToggle {
         this._info = new PopupMenu.PopupMenuItem('', {reactive: false});
         this.menu.addMenuItem(this._info);
 
-        this.connect('clicked', () => this._setMode(this._mode === 'auto' ? 'quiet' : 'auto'));
+        this.connect('clicked', () => this._setMode(this._mode === 'auto' ? this._lastOther : 'auto'));
         this.menu.connect('open-state-changed', (_menu, open) => {
             if (open)
                 this._startPolling();
@@ -80,6 +82,8 @@ class FanToggle extends QuickMenuToggle {
 
     _sync({mode, rpm, temp}) {
         this._mode = MODES[mode] ? mode : 'auto';
+        if (this._mode !== 'auto')
+            this._lastOther = this._mode;
         this.checked = this._mode !== 'auto';
         this.subtitle = MODES[this._mode].label;
         this._indicator.visible = this.checked;

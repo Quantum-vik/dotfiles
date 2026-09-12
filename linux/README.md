@@ -19,7 +19,7 @@ Then log out and back in once (GNOME loads new extensions and the shell theme on
 | `configs` | Symlinks shell, kitty, tmux and Claude Code configs into this repo; seeds app configs that rewrite themselves; installs launchers and helper scripts |
 | `gnome` | Loads `gnome/desktop.dconf` |
 | `fingerprint` | Fingerprint for login, lock screen, `sudo` and password dialogs. If Ubuntu's libfprint doesn't recognise the reader but pinned upstream release 1.94.100 does, builds that release and installs only its library to `/usr/local`; skips machines without a supported reader. Waits 30 s per try, 3 tries (`pam/fprintd-local`; Ubuntu's default of 10 s often times out in password dialogs). Then add a finger in Settings → System → Users |
-| `fan` | HP laptops only: a **Fan** toggle in Quick Settings with Auto / Quiet, switchable with no password (`fan/`). Skipped on other machines |
+| `fan` | HP laptops only: a **Fan** toggle in Quick Settings with Auto / Cool / Quiet, switchable with no password (`fan/`). Skipped on other machines |
 
 Every step is safe to re-run. A file that differs from the repo is moved to `<file>.bak-<timestamp>`.
 
@@ -61,15 +61,18 @@ it. Measured under full CPU load in that mode: the CPU hit 96 °C, the fan waite
 1400 → 3800 RPM exactly as it does on auto. The firmware curve alone runs the single fan: off when cool,
 up to ~3800 RPM under sustained load, and it stops around 48 °C.
 
-The lever that does work is CPU heat. The same load in Quiet held the CPU at 55 °C instead of 96 °C,
-below where the fan starts. The `fan` step offers two modes:
+The lever that does work is CPU heat. The `fan` step offers three modes, measured with a 25 s all-core load
+(`openssl speed -multi 12 sha256`):
 
-| Mode | What it does |
-|---|---|
-| Auto | Firmware fan curve; CPU limits exactly as they were |
-| Quiet | Firmware fan curve, but turbo off and a 10 W CPU package limit, so there is less heat and the fan rarely starts |
+| Mode | CPU limits | Avg / peak temp | Power | Speed |
+|---|---|---|---|---|
+| Auto | stock (no sustained cap, 41 W bursts) | 96 / 99 °C | 29 W | 100 % |
+| Cool | 15 W sustained, 20 W bursts, turbo on | 79 / 83 °C | 20 W | 82 % |
+| Quiet | 10 W, turbo off | 52 / 54 °C | 6 W | 31 % |
 
-- `/usr/local/sbin/fan-mode status|auto|quiet` does the work, and also runs from a terminal with `pkexec`.
+A cap only takes effect while the CPU would otherwise draw more than it (heavy work such as builds or Docker).
+
+- `/usr/local/sbin/fan-mode status|auto|cool|quiet` does the work, and also runs from a terminal with `pkexec`.
   Its polkit policy lets the person at the laptop run it with no password.
 - The Quick Settings extension calls it. The top-bar fan icon shows only when the mode isn't Auto.
 - Nothing survives a reboot: fan, turbo and power limits all come back as Auto.
