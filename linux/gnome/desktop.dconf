@@ -162,7 +162,7 @@ visible-name='WhiteSur Dark'
 trigger=['Zenkaku_Hankaku', 'Alt+Kanji', 'Alt+grave', 'Hangul', 'Alt+Release+Alt_R']
 
 [org/gnome/shell]
-enabled-extensions=['custom-hot-corners-extended@G-dH.github.com', 'user-theme@gnome-shell-extensions.gcampax.github.com', 'monitor@astraext.github.io']
+enabled-extensions=['custom-hot-corners-extended@G-dH.github.com', 'user-theme@gnome-shell-extensions.gcampax.github.com', 'monitor@astraext.github.io', 'fan-mode@quantumvik']
 disabled-extensions=['Vitals@CoreCoding.com']
 favorite-apps=['google-chrome.desktop', 'org.gnome.Nautilus.desktop', 'snap-store_snap-store.desktop', 'yelp.desktop', 'code.desktop', 'postman.desktop']
 

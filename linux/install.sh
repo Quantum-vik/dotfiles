@@ -4,7 +4,7 @@
 #   ./install.sh                     run every step, in order
 #   ./install.sh configs gnome       run only the named steps
 #
-# Steps: packages  tools  desktop  configs  gnome  fingerprint
+# Steps: packages  tools  desktop  configs  gnome  fingerprint  fan
 #
 # Safe to re-run: each step skips work that is already done, and any existing file
 # that differs from the repo is moved to <file>.bak-<timestamp>, never deleted.
@@ -345,19 +345,46 @@ step_fingerprint() {
     fi
   fi
 
-  sudo pam-auth-update --enable fprintd
+  # Ubuntu's profile waits 10 s for one try, which password dialogs often time out on. Same line, 30 s x 3.
+  sudo install -m 644 "$DOT/pam/fprintd-local" /usr/share/pam-configs/fprintd-local
+  sudo pam-auth-update --disable fprintd
+  sudo pam-auth-update --enable fprintd-local
   info "add a finger in Settings -> System -> Users -> Fingerprint Login"
+}
+
+# ---------------------------------------------------------------------------
+# Fan modes for HP laptops whose firmware offers only auto or full speed (hp-wmi exposes no pwm1 duty value).
+# Installs the root helper, a polkit policy that lets the active desktop user run it without a password,
+# and a Quick Settings extension with Auto / Quiet / Max Cooling. Skipped on other machines.
+step_fan() {
+  log "fan modes: Auto / Quiet / Max Cooling in Quick Settings (HP hp-wmi only)"
+  if ! grep -qsx hp /sys/class/hwmon/hwmon*/name || ! ls /sys/class/hwmon/hwmon*/pwm1_enable >/dev/null 2>&1; then
+    info "no hp-wmi fan control on this machine; skipping"; return
+  fi
+  sudo -v
+  sudo install -m 755 "$DOT/fan/fan-mode" /usr/local/sbin/fan-mode
+  sudo install -m 644 "$DOT/fan/local.fan-mode.policy" /usr/share/polkit-1/actions/local.fan-mode.policy
+
+  local uuid=fan-mode@quantumvik ext="$HOME/.local/share/gnome-shell/extensions/fan-mode@quantumvik" cur
+  install -D -m 644 -t "$ext" "$DOT/fan/$uuid/metadata.json" "$DOT/fan/$uuid/extension.js"
+  cur=$(gsettings get org.gnome.shell enabled-extensions)
+  case "$cur" in
+    *"$uuid"*) ;;
+    "@as []") gsettings set org.gnome.shell enabled-extensions "['$uuid']" ;;
+    *) gsettings set org.gnome.shell enabled-extensions "${cur%]}, '$uuid']" ;;
+  esac
+  info "$(/usr/local/sbin/fan-mode status); the Fan toggle appears after the next login"
 }
 
 # ---------------------------------------------------------------------------
 main() {
   [ "$(id -u)" -ne 0 ] || { echo "Run as your normal user; the script calls sudo where it needs to."; exit 1; }
   local steps=("$@")
-  [ ${#steps[@]} -gt 0 ] || steps=(packages tools desktop configs gnome fingerprint)
+  [ ${#steps[@]} -gt 0 ] || steps=(packages tools desktop configs gnome fingerprint fan)
   for s in "${steps[@]}"; do
     case "$s" in
-      packages|tools|desktop|configs|gnome|fingerprint) "step_$s" ;;
-      *) echo "Unknown step '$s'. Steps: packages tools desktop configs gnome fingerprint"; exit 1 ;;
+      packages|tools|desktop|configs|gnome|fingerprint|fan) "step_$s" ;;
+      *) echo "Unknown step '$s'. Steps: packages tools desktop configs gnome fingerprint fan"; exit 1 ;;
     esac
   done
   log "done: ${steps[*]}"

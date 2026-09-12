@@ -18,7 +18,8 @@ Then log out and back in once (GNOME loads new extensions and the shell theme on
 | `desktop` | MesloLGS NF + Monocraft fonts, WhiteSur theme/icons/cursors, macOS-style dynamic wallpapers, kitty's background image, GNOME extensions from `packages/gnome-extensions.txt` |
 | `configs` | Symlinks shell, kitty, tmux and Claude Code configs into this repo; seeds app configs that rewrite themselves; installs launchers and helper scripts |
 | `gnome` | Loads `gnome/desktop.dconf` |
-| `fingerprint` | Fingerprint for login, lock screen, `sudo` and password dialogs. If Ubuntu's libfprint doesn't recognise the reader but pinned upstream release 1.94.100 does, builds that release and installs only its library to `/usr/local`; skips machines without a supported reader. Then add a finger in Settings → System → Users |
+| `fingerprint` | Fingerprint for login, lock screen, `sudo` and password dialogs. If Ubuntu's libfprint doesn't recognise the reader but pinned upstream release 1.94.100 does, builds that release and installs only its library to `/usr/local`; skips machines without a supported reader. Waits 30 s per try, 3 tries (`pam/fprintd-local`; Ubuntu's default of 10 s often times out in password dialogs). Then add a finger in Settings → System → Users |
+| `fan` | HP laptops only: a **Fan** toggle in Quick Settings with Auto / Quiet / Max Cooling, switchable with no password (`fan/`). Skipped on other machines |
 
 Every step is safe to re-run. A file that differs from the repo is moved to `<file>.bak-<timestamp>`.
 
@@ -35,6 +36,8 @@ copyq/         copyq.conf                                   -> seeded
 git/           gitconfig  gitconfig-personal   (work identity global, personal under ~/WorkPersonal and ~/dotfiles)
 ssh/           config          (host aliases only, no keys)
 applications/  postman.desktop
+pam/           fprintd-local   (fingerprint: 30 s per try, 3 tries)
+fan/           fan-mode  local.fan-mode.policy  fan-mode@quantumvik/   (HP fan modes)
 scripts/       revert-whitesur.sh  revert-ctrl-arrows.sh  revert-fingerprint.sh  verify-hot-corners.sh  citrix-latest.py
 ```
 
@@ -49,7 +52,24 @@ Ubuntu's `fprintd` works with it unchanged.
   `scripts/revert-fingerprint.sh` to go back to the packaged copy.
 - Fingerprint doesn't unlock GNOME Keyring: after a fingerprint login, the first app that needs saved secrets
   asks for the password once.
-- The fan can't be set to a manual speed on this model: `hp-wmi` exposes only auto or full speed.
+
+## Fan modes (HP 250R G10)
+
+The firmware offers only two fan settings through `hp-wmi`: auto (`pwm1_enable=2`) and full speed (`0`).
+It rejects manual mode, and there is no `pwm1` duty value, so no tool can set a percentage. The single fan
+is either off or about 3000 RPM, and waits for the CPU to cool to about 48 °C before stopping. The `fan` step
+turns those two settings into three modes:
+
+| Mode | What it does |
+|---|---|
+| Auto | Firmware fan curve; CPU limits exactly as they were |
+| Quiet | Firmware fan curve, but turbo off and a 10 W CPU package limit, so there is less heat and the fan rarely starts |
+| Max Cooling | Fan forced to full speed |
+
+- `/usr/local/sbin/fan-mode status|auto|quiet|max` does the work, and also runs from a terminal with `pkexec`.
+  Its polkit policy lets the person at the laptop run it with no password.
+- The Quick Settings extension calls it. The top-bar fan icon shows only when the mode isn't Auto.
+- Nothing survives a reboot: fan, turbo and power limits all come back as Auto.
 
 ## What `desktop.dconf` sets
 

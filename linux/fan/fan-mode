@@ -1,0 +1,75 @@
+#!/bin/bash
+# Fan modes for HP laptops whose firmware only offers "auto" or "full speed" (hp-wmi pwm1_enable 2 / 0).
+#
+#   fan-mode status            mode=<auto|quiet|max> rpm=<n> temp=<°C>   (any user)
+#   fan-mode auto|quiet|max    switch mode (root; the polkit policy lets the desktop user run it via pkexec)
+#
+#   auto   firmware fan curve, CPU limits back to what they were
+#   quiet  firmware fan curve, but turbo off and a 10 W CPU package limit, so there is less heat to blow away
+#   max    fan forced to full speed, CPU limits back to what they were
+#
+# Nothing persists: the firmware fan mode, turbo and CPU power limits all return to normal on reboot.
+# Installed to /usr/local/sbin/fan-mode by ~/dotfiles/linux/install.sh (step: fan).
+set -euo pipefail
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+
+STATE=/run/fan-mode                  # tmpfs: current mode, gone after reboot
+SAVED=/run/fan-mode.limits           # CPU settings from before quiet mode
+RAPL=/sys/class/powercap/intel-rapl:0
+TURBO=/sys/devices/system/cpu/intel_pstate/no_turbo
+QUIET_PL1_UW=10000000
+
+find_hwmon() {  # $1 = hwmon name, $2 = file that must exist
+  local h
+  for h in /sys/class/hwmon/hwmon*; do
+    if [ "$(cat "$h/name" 2>/dev/null)" = "$1" ] && [ -e "$h/$2" ]; then echo "$h"; return 0; fi
+  done
+  return 1
+}
+
+HP=$(find_hwmon hp pwm1_enable) || { echo "fan-mode: no hp-wmi fan control on this machine" >&2; exit 1; }
+
+status() {
+  local mode rpm=0 r temp="?" core
+  mode=$(cat "$STATE" 2>/dev/null || echo auto)
+  for f in "$HP"/fan*_input; do r=$(cat "$f"); if [ "$r" -gt "$rpm" ]; then rpm=$r; fi; done
+  if core=$(find_hwmon coretemp temp1_input); then temp=$(( $(cat "$core/temp1_input") / 1000 )); fi
+  echo "mode=$mode rpm=$rpm temp=$temp"
+}
+
+save_limits() {
+  [ -e "$SAVED" ] && return
+  printf '%s %s %s\n' "$(cat "$RAPL/constraint_0_power_limit_uw")" \
+    "$(cat "$RAPL/constraint_1_power_limit_uw")" "$(cat "$TURBO")" > "$SAVED"
+}
+
+restore_limits() {
+  [ -e "$SAVED" ] || return 0
+  local pl1 pl2 turbo
+  read -r pl1 pl2 turbo < "$SAVED"
+  echo "$pl2" > "$RAPL/constraint_1_power_limit_uw"
+  echo "$pl1" > "$RAPL/constraint_0_power_limit_uw"
+  echo "$turbo" > "$TURBO"
+  rm -f "$SAVED"
+}
+
+need_root() { [ "$(id -u)" -eq 0 ] || { echo "fan-mode: run as root (pkexec fan-mode $1)" >&2; exit 1; }; }
+
+case "${1:-status}" in
+  status) status ;;
+  auto)
+    need_root auto
+    echo 2 > "$HP/pwm1_enable"; restore_limits; echo auto > "$STATE"; status ;;
+  max)
+    need_root max
+    restore_limits; echo 0 > "$HP/pwm1_enable"; echo max > "$STATE"; status ;;
+  quiet)
+    need_root quiet
+    echo 2 > "$HP/pwm1_enable"
+    save_limits
+    echo 1 > "$TURBO"
+    [ "$(cat "$RAPL/constraint_0_power_limit_uw")" -le "$QUIET_PL1_UW" ] \
+      || echo "$QUIET_PL1_UW" > "$RAPL/constraint_0_power_limit_uw"
+    echo quiet > "$STATE"; status ;;
+  *) echo "usage: fan-mode status|auto|quiet|max" >&2; exit 2 ;;
+esac
