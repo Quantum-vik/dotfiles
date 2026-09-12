@@ -90,8 +90,19 @@ A cap only takes effect while the CPU would otherwise draw more than it (heavy w
   and CPU-temperature graphs; click any of them for history and top processes. Per-process network/disk
   views ask for your password via pkexec (nethogs/iotop). No GPU module: Astra only supports AMD/NVIDIA.
 - **GNOME Terminal**: MesloLGS NF, matching dark palette, opaque.
+- **Reopen apps after logout/restart**: [Another Window Session Manager](https://github.com/nlpsuge/gnome-shell-extension-another-window-session-manager)
+  saves the open apps and windows when you log out, restart or power off, and reopens them at the next login
+  without asking, back on their workspaces at their size and position. Apps restore their own contents only if
+  they keep them (VS Code does; Chrome needs *Settings → On startup → Continue where you left off*).
 
 Not portable as-is: the hot-corner keys are for monitor 0 only.
+
+## tmux across logouts and reboots
+
+The tmux server keeps running through a GNOME logout, so its sessions are still there, just detached.
+`tmux` / `tm` with no arguments (`shell/aliases.zsh`) therefore reattaches to the most recent session instead of
+creating an empty one. After a reboot there is no server: `tmux` starts one, and tmux-continuum restores the last
+tmux-resurrect save (every 5 minutes, `tmux/tmux.conf`). Pick another session with `prefix s`.
 
 ## Deliberately not in this repo
 

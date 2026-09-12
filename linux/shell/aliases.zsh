@@ -3,7 +3,17 @@
 # free up Ctrl-S / Ctrl-Q (disable terminal flow control) for tmux prefix
 stty -ixon 2>/dev/null
 
-alias tm="tmux"       # launch tmux
+# `tmux` / `tm` with no arguments reattaches to the most recent session. The tmux server outlives a GNOME
+# logout, so a bare `tmux new-session` would leave the old sessions detached and open an empty one. With no
+# server (after a reboot) it starts one, and tmux-continuum restores the last tmux-resurrect save.
+tmux() {
+  if [[ $# -eq 0 && -z $TMUX ]]; then
+    command tmux attach-session 2>/dev/null || command tmux new-session
+  else
+    command tmux "$@"
+  fi
+}
+alias tm="tmux"       # launch tmux (reattaches if sessions exist)
 alias cc="claude --dangerously-skip-permissions"     # Claude Code
 alias lg="lazygit"    # lazygit
 
