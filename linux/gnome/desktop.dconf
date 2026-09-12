@@ -168,5 +168,5 @@ trigger=['Zenkaku_Hankaku', 'Alt+Kanji', 'Alt+grave', 'Hangul', 'Alt+Release+Alt
 [org/gnome/shell]
 enabled-extensions=['custom-hot-corners-extended@G-dH.github.com', 'user-theme@gnome-shell-extensions.gcampax.github.com', 'monitor@astraext.github.io', 'fan-mode@quantumvik', 'another-window-session-manager@gmail.com']
 disabled-extensions=['Vitals@CoreCoding.com']
-favorite-apps=['google-chrome.desktop', 'org.gnome.Nautilus.desktop', 'snap-store_snap-store.desktop', 'yelp.desktop', 'code.desktop', 'postman.desktop']
+favorite-apps=['google-chrome.desktop', 'org.gnome.Nautilus.desktop', 'snap-store_snap-store.desktop', 'yelp.desktop', 'code.desktop', 'postman.desktop', 'auto-keka.desktop', 'com.rtosta.zapzap.desktop', 'com.github.IsmaelMartinez.teams_for_linux.desktop', 'org.gnome.Terminal.desktop']
 
