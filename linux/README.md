@@ -45,7 +45,10 @@ scripts/       revert-whitesur.sh  revert-ctrl-arrows.sh  verify-hot-corners.sh
 - **Dock**: right edge, autohide, 64 px.
 - **Hot corners** (Custom Hot Corners – Extended): top-left lock, top-right overview, bottom-left app grid, bottom-right Quick Note (`zim`).
 - **Shortcuts**: `Super+V` CopyQ, `Super+L` lock, `Shift+Super+3/4/5/6` screenshots and recording, message tray on `Super+M`.
-- **Look**: WhiteSur-Dark, window buttons on the left, Inter 10.5, Sonoma time-of-day wallpaper, weekday + battery % in the top bar, Vitals, Night Light off.
+- **Look**: WhiteSur-Dark, window buttons on the left, Inter 10.5, Sonoma time-of-day wallpaper, weekday + battery % in the top bar, Night Light off.
+- **Top bar system monitor**: Astra Monitor (the macOS Stats equivalent) with live CPU, memory, disk, network
+  and CPU-temperature graphs; click any of them for history and top processes. Per-process network/disk
+  views ask for your password via pkexec (nethogs/iotop). No GPU module: Astra only supports AMD/NVIDIA.
 - **GNOME Terminal**: MesloLGS NF, matching dark palette, opaque.
 
 Not portable as-is: the hot-corner keys are for monitor 0 only.

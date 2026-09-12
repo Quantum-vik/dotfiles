@@ -37,3 +37,6 @@ libglib2.0-dev-bin
 libxml2-utils
 flatpak
 fonts-inter
+lm-sensors
+nethogs
+iotop

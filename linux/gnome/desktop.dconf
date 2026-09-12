@@ -115,8 +115,10 @@ tiling-popup-all-workspace=true
 [org/gnome/shell/extensions/user-theme]
 name='WhiteSur-Dark'
 
-[org/gnome/shell/extensions/vitals]
-hot-sensors=['_processor_usage_', '_memory_usage_', '__temperature_avg__', '__network-rx_max__']
+[org/gnome/shell/extensions/astra-monitor]
+sensors-header-sensor1='{"service":"lm-sensors","path":["coretemp-isa-0000","Package id 0","temp1_input"]}'
+sensors-header-sensor1-show=true
+sensors-header-show=true
 
 [org/gnome/settings-daemon/plugins/media-keys]
 custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/copyq/']
@@ -160,6 +162,7 @@ visible-name='WhiteSur Dark'
 trigger=['Zenkaku_Hankaku', 'Alt+Kanji', 'Alt+grave', 'Hangul', 'Alt+Release+Alt_R']
 
 [org/gnome/shell]
-enabled-extensions=['custom-hot-corners-extended@G-dH.github.com', 'user-theme@gnome-shell-extensions.gcampax.github.com', 'Vitals@CoreCoding.com']
+enabled-extensions=['custom-hot-corners-extended@G-dH.github.com', 'user-theme@gnome-shell-extensions.gcampax.github.com', 'monitor@astraext.github.io']
+disabled-extensions=['Vitals@CoreCoding.com']
 favorite-apps=['google-chrome.desktop', 'org.gnome.Nautilus.desktop', 'snap-store_snap-store.desktop', 'yelp.desktop', 'code.desktop', 'postman.desktop']
 

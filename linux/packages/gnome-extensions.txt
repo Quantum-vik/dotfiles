@@ -1,4 +1,4 @@
 # GNOME Shell extensions from extensions.gnome.org:  <uuid> <extensions.gnome.org id>
 # (User Themes comes from the gnome-shell-extensions apt package; Ubuntu's dock/tiling/appindicators/ding ship with the OS.)
 custom-hot-corners-extended@G-dH.github.com 4167
-Vitals@CoreCoding.com 1460
+monitor@astraext.github.io 6682
