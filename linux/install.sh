@@ -4,7 +4,7 @@
 #   ./install.sh                     run every step, in order
 #   ./install.sh configs gnome       run only the named steps
 #
-# Steps: packages  tools  desktop  configs  gnome
+# Steps: packages  tools  desktop  configs  gnome  fingerprint
 #
 # Safe to re-run: each step skips work that is already done, and any existing file
 # that differs from the repo is moved to <file>.bak-<timestamp>, never deleted.
@@ -296,14 +296,68 @@ step_gnome() {
 }
 
 # ---------------------------------------------------------------------------
+# Fingerprint login. When Ubuntu's libfprint doesn't know the reader (the HP 250R G10's Synaptics 06cb:0169
+# first appears in 1.94.100), a pinned upstream release is built and ONLY its shared library goes into
+# /usr/local, which the loader prefers over Ubuntu's copy. apt never updates it. Undo: scripts/revert-fingerprint.sh
+FP_TAG=v1.94.100
+FP_COMMIT=80a4b5ec612892c5c056c48dddaa561452cf37ec
+FP_LIB=/usr/local/lib/x86_64-linux-gnu/libfprint-2.so.2
+
+fp_readers() { fprintd-list "$USER" 2>/dev/null | awk '/^found/ && $2 > 0 {print $2; exit}'; }
+
+step_fingerprint() {
+  sudo -v
+  log "fingerprint reader for login, lock screen, sudo and password dialogs"
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y fprintd libpam-fprintd
+
+  if [ "$(fp_readers)" ]; then
+    info "reader already supported"
+  else
+    local src="$TMP/libfprint" supported match="" id
+    git clone -q --depth 1 --branch "$FP_TAG" https://gitlab.freedesktop.org/libfprint/libfprint.git "$src"
+    [ "$(git -C "$src" rev-parse HEAD)" = "$FP_COMMIT" ] || { warn "libfprint $FP_TAG is not the pinned commit"; exit 1; }
+
+    # Build only if a plugged-in USB device is on this release's supported list.
+    supported=$(sed '/^# Known unsupported/q' "$src/data/autosuspend.hwdb" | grep -oE '^usb:v[0-9A-F]{4}p[0-9A-F]{4}')
+    for id in $(lsusb | awk '{print toupper($6)}'); do
+      if grep -qx "usb:v${id%%:*}p${id##*:}" <<<"$supported"; then match="$id"; fi
+    done
+    if [ -z "$match" ]; then info "no fingerprint reader that libfprint $FP_TAG supports; skipping"; return; fi
+
+    info "reader ${match,,} needs libfprint $FP_TAG: building it"
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y meson ninja-build pkg-config \
+      libglib2.0-dev libgusb-dev libgudev-1.0-dev libssl-dev libudev-dev libpixman-1-dev libcairo2-dev
+    # The no-introspection test stubs iterate a dict with one variable, which meson 1.3 (Ubuntu 24.04) rejects.
+    sed -i 's/foreach driver_test: drivers_tests$/foreach driver_test: drivers_tests.keys()/' "$src/tests/meson.build"
+    meson setup "$src/build" "$src" --buildtype=release \
+      -Ddoc=false -Dgtk-examples=false -Dintrospection=false -Dinstalled-tests=false >/dev/null
+    ninja -C "$src/build" >/dev/null
+
+    sudo install -D -m 644 "$src/build/libfprint/libfprint-2.so.2.0.0" "$FP_LIB.0.0"
+    sudo ln -sfn libfprint-2.so.2.0.0 "$FP_LIB"
+    sudo ldconfig
+    sudo systemctl stop fprintd.service 2>/dev/null || true   # D-Bus starts it again with the new library
+    if [ "$(fp_readers)" ]; then info "reader detected"
+    else
+      warn "reader still not detected; removing the /usr/local libfprint again"
+      bash "$DOT/scripts/revert-fingerprint.sh"
+      return
+    fi
+  fi
+
+  sudo pam-auth-update --enable fprintd
+  info "add a finger in Settings -> System -> Users -> Fingerprint Login"
+}
+
+# ---------------------------------------------------------------------------
 main() {
   [ "$(id -u)" -ne 0 ] || { echo "Run as your normal user; the script calls sudo where it needs to."; exit 1; }
   local steps=("$@")
-  [ ${#steps[@]} -gt 0 ] || steps=(packages tools desktop configs gnome)
+  [ ${#steps[@]} -gt 0 ] || steps=(packages tools desktop configs gnome fingerprint)
   for s in "${steps[@]}"; do
     case "$s" in
-      packages|tools|desktop|configs|gnome) "step_$s" ;;
-      *) echo "Unknown step '$s'. Steps: packages tools desktop configs gnome"; exit 1 ;;
+      packages|tools|desktop|configs|gnome|fingerprint) "step_$s" ;;
+      *) echo "Unknown step '$s'. Steps: packages tools desktop configs gnome fingerprint"; exit 1 ;;
     esac
   done
   log "done: ${steps[*]}"

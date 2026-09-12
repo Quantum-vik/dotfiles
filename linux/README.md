@@ -18,6 +18,7 @@ Then log out and back in once (GNOME loads new extensions and the shell theme on
 | `desktop` | MesloLGS NF + Monocraft fonts, WhiteSur theme/icons/cursors, macOS-style dynamic wallpapers, kitty's background image, GNOME extensions from `packages/gnome-extensions.txt` |
 | `configs` | Symlinks shell, kitty, tmux and Claude Code configs into this repo; seeds app configs that rewrite themselves; installs launchers and helper scripts |
 | `gnome` | Loads `gnome/desktop.dconf` |
+| `fingerprint` | Fingerprint for login, lock screen, `sudo` and password dialogs. If Ubuntu's libfprint doesn't recognise the reader but pinned upstream release 1.94.100 does, builds that release and installs only its library to `/usr/local`; skips machines without a supported reader. Then add a finger in Settings → System → Users |
 
 Every step is safe to re-run. A file that differs from the repo is moved to `<file>.bak-<timestamp>`.
 
@@ -34,8 +35,21 @@ copyq/         copyq.conf                                   -> seeded
 git/           gitconfig  gitconfig-personal   (work identity global, personal under ~/WorkPersonal and ~/dotfiles)
 ssh/           config          (host aliases only, no keys)
 applications/  postman.desktop
-scripts/       revert-whitesur.sh  revert-ctrl-arrows.sh  verify-hot-corners.sh  citrix-latest.py
+scripts/       revert-whitesur.sh  revert-ctrl-arrows.sh  revert-fingerprint.sh  verify-hot-corners.sh  citrix-latest.py
 ```
+
+## Fingerprint reader (HP 250R G10)
+
+Ubuntu 24.04's libfprint (1.94.7) doesn't include this laptop's Synaptics reader, `06cb:0169`. The `fingerprint`
+step builds upstream `v1.94.100` (commit pinned in `install.sh`) and installs only
+`/usr/local/lib/x86_64-linux-gnu/libfprint-2.so.2`. The loader picks that path before Ubuntu's copy, and
+Ubuntu's `fprintd` works with it unchanged.
+
+- apt never updates this library. Once Ubuntu ships a libfprint that knows the reader, run
+  `scripts/revert-fingerprint.sh` to go back to the packaged copy.
+- Fingerprint doesn't unlock GNOME Keyring: after a fingerprint login, the first app that needs saved secrets
+  asks for the password once.
+- The fan can't be set to a manual speed on this model: `hp-wmi` exposes only auto or full speed.
 
 ## What `desktop.dconf` sets
 
