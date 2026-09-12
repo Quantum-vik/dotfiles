@@ -13,8 +13,8 @@ Then log out and back in once (GNOME loads new extensions and the shell theme on
 
 | Step | What it does |
 |---|---|
-| `packages` | Adds the VS Code, pgAdmin and Docker apt repos (signing keys checked against pinned fingerprints), installs `packages/apt.txt` plus Docker Engine (not Desktop) with you in the `docker` group, and Flathub apps from `packages/flatpak.txt` |
-| `tools` | Go, uv, lazygit, kubectl, AWS CLI, espanso (Wayland), Postman, Oh My Zsh + Powerlevel10k, tmux TPM; sets zsh as login shell and kitty as default terminal. Downloads are checksum-verified where the vendor publishes one |
+| `packages` | Adds the VS Code, pgAdmin and Docker apt repos (signing keys checked against pinned fingerprints), installs `packages/apt.txt` plus Docker Engine (not Desktop) with you in the `docker` group, and Flathub apps from `packages/flatpak.txt`: Mission Center, ZapZap (WhatsApp), Teams for Linux |
+| `tools` | Go, uv, lazygit, kubectl, AWS CLI, espanso (Wayland), Postman, Citrix Workspace app (optional App Protection/deviceTRUST/EPA off; Ubuntu root CAs linked into its store), Oh My Zsh + Powerlevel10k, tmux TPM; sets zsh as login shell and kitty as default terminal. Downloads are checksum-verified where the vendor publishes one |
 | `desktop` | MesloLGS NF + Monocraft fonts, WhiteSur theme/icons/cursors, macOS-style dynamic wallpapers, kitty's background image, GNOME extensions from `packages/gnome-extensions.txt` |
 | `configs` | Symlinks shell, kitty, tmux and Claude Code configs into this repo; seeds app configs that rewrite themselves; installs launchers and helper scripts |
 | `gnome` | Loads `gnome/desktop.dconf` |
@@ -33,8 +33,8 @@ espanso/       match/base.yml  config/default.yml           -> seeded
 copyq/         copyq.conf                                   -> seeded
 git/           gitconfig  gitconfig-personal   (work identity global, personal under ~/WorkPersonal and ~/dotfiles)
 ssh/           config          (host aliases only, no keys)
-applications/  whatsapp-web  teams-web  postman  .desktop
-scripts/       revert-whitesur.sh  revert-ctrl-arrows.sh  verify-hot-corners.sh
+applications/  postman.desktop
+scripts/       revert-whitesur.sh  revert-ctrl-arrows.sh  verify-hot-corners.sh  citrix-latest.py
 ```
 
 ## What `desktop.dconf` sets

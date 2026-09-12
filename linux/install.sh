@@ -159,6 +159,30 @@ step_tools() {
   log "login shell -> zsh, default terminal -> kitty"
   [ "$(getent passwd "$USER" | cut -d: -f7)" = "$(command -v zsh)" ] || sudo chsh -s "$(command -v zsh)" "$USER"
   sudo update-alternatives --set x-terminal-emulator /usr/bin/kitty
+
+  log "Citrix Workspace app (SHA-256 from the Citrix download page; optional components off)"
+  if dpkg -s icaclient >/dev/null 2>&1; then info "present"; else
+    local ua="Mozilla/5.0 (X11; Linux x86_64)" curl_url sha
+    if curl -fsSL -A "$ua" -o "$TMP/citrix.html" \
+         https://www.citrix.com/downloads/workspace-app/linux/workspace-app-for-linux-latest.html; then
+      read -r curl_url sha < <(python3 "$DOT/scripts/citrix-latest.py" "$TMP/citrix.html")
+      if [ "$curl_url" != "-" ] && [ "$sha" != "-" ]; then
+        curl -fsSL -A "$ua" -o "$TMP/icaclient.deb" "$curl_url"
+        echo "$sha  $TMP/icaclient.deb" | sha256sum -c -
+        printf '%s\n' "icaclient app_protection/install_app_protection select no" \
+          "icaclient devicetrust/install_devicetrust select no" "icaclient epa/install_epa select no" | sudo debconf-set-selections
+        sudo cp "$TMP/icaclient.deb" /var/cache/apt/archives/icaclient-latest.deb
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y /var/cache/apt/archives/icaclient-latest.deb
+      else warn "Citrix download link or checksum not found on the page; install Citrix Workspace manually"; fi
+    else warn "Citrix download page unreachable; skipping"; fi
+  fi
+  if [ -d /opt/Citrix/ICAClient/keystore/cacerts ]; then
+    info "Citrix: trusting Ubuntu's root certificates (prevents SSL error 61)"
+    for c in /usr/share/ca-certificates/mozilla/*.crt; do
+      d="/opt/Citrix/ICAClient/keystore/cacerts/$(basename "$c")"; [ -e "$d" ] || sudo ln -s "$c" "$d"
+    done
+    sudo /opt/Citrix/ICAClient/util/ctx_rehash /opt/Citrix/ICAClient/keystore/cacerts >/dev/null 2>&1 || true
+  fi
 }
 
 # ---------------------------------------------------------------------------
@@ -211,13 +235,6 @@ crop = pb.new_subpixbuf(0, int(pb.get_height() * 0.30), w, w * 9 // 16)
 crop.scale_simple(1920, 1080, GdkPixbuf.InterpType.HYPER).savev(p("~/.config/kitty/sonoma-dark.png"), "png", [], [])
 PY
   fi
-
-  log "PWA icons for WhatsApp and Teams launchers"
-  local ic="$HOME/.local/share/icons/hicolor"
-  mkdir -p "$ic/512x512/apps" "$ic/256x256/apps"
-  [ -f "$ic/512x512/apps/whatsapp-web.png" ] || curl -fsSL https://web.whatsapp.com/whatsapp_pwa_icon_512.png -o "$ic/512x512/apps/whatsapp-web.png"
-  [ -f "$ic/256x256/apps/teams-web.png" ]    || curl -fsSL "https://www.google.com/s2/favicons?domain=teams.microsoft.com&sz=256" -o "$ic/256x256/apps/teams-web.png"
-  gtk-update-icon-cache -f -t "$ic" >/dev/null 2>&1 || true
 
   log "GNOME extensions from extensions.gnome.org (active after next login)"
   local shellv; shellv=$(gnome-shell --version | awk '{print int($3)}')

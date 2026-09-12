@@ -1,2 +1,4 @@
 # Flathub apps (installed with --user)
 io.missioncenter.MissionCenter
+com.rtosta.zapzap
+com.github.IsmaelMartinez.teams_for_linux
