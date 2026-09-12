@@ -30,3 +30,24 @@ Notes:
 - Needs `tmux-256color` terminfo (`ncurses-term` on Debian/Ubuntu if missing).
 
 Plugins: tmux-resurrect + tmux-continuum, with auto-restore on and 15-minute saves.
+
+## Claude Code
+
+`claude/` — settings, keybindings, and the custom statusline.
+
+```bash
+for f in settings.json keybindings.json statusline.sh; do
+  ln -sf ~/dotfiles/claude/$f ~/.claude/$f
+done
+chmod +x ~/.claude/statusline.sh
+```
+
+`statusline.sh` needs `jq`, `git` and `awk`. It renders model, a context-window
+progress bar, effort level, token in/out/total, session cost, cache-hit ratio
+(warns below 70%), git branch with a dirty flag, and plan rate-limit countdowns.
+
+Not tracked here, deliberately: `~/.claude.json` (contains oauthAccount, userID,
+machineID), `projects/`, `history.jsonl`, `shell-snapshots/`, `cache/`.
+
+Plugins and marketplaces are not files — reinstall them with `/plugin` inside
+Claude Code rather than copying.

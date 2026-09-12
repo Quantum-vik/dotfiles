@@ -1,0 +1,54 @@
+{
+  "model": "opus[1m]",
+  "effortLevel": "xhigh",
+  "alwaysThinkingEnabled": true,
+  "autoCompactEnabled": false,
+
+  "theme": "dark-daltonized",
+  "tui": "fullscreen",
+  "editorMode": "normal",
+  "autoScrollEnabled": true,
+
+  "voice": { "enabled": true, "mode": "hold" },
+  "voiceEnabled": true,
+
+  "permissions": {
+    "defaultMode": "auto",
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(git *)",
+      "Bash(uv *)",
+      "Read(.)",
+      "Write(./src/**)",
+      "Write(./tests/**)"
+    ]
+  },
+
+  "skipDangerousModePermissionPrompt": true,
+  "skipAutoPermissionPrompt": true,
+
+  "preferredNotifChannel": "terminal_bell",
+  "inputNeededNotifEnabled": true,
+  "agentPushNotifEnabled": true,
+  "remoteControlAtStartup": true,
+  "autoMemoryEnabled": true,
+
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh",
+    "refreshInterval": 1
+  },
+
+  "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "canberra-gtk-play -i complete >/dev/null 2>&1 &"
+          }
+        ]
+      }
+    ]
+  }
+}
