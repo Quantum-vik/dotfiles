@@ -1,7 +1,7 @@
 {
   "uuid": "fan-mode@quantumvik",
   "name": "Fan Mode",
-  "description": "Auto / Quiet / Max Cooling fan modes in Quick Settings, for HP laptops whose firmware only offers auto or full speed. Uses /usr/local/sbin/fan-mode.",
+  "description": "Auto / Quiet fan modes in Quick Settings for HP laptops: Quiet caps CPU heat so the fan rarely starts. Uses /usr/local/sbin/fan-mode.",
   "shell-version": ["46"],
   "version": 1
 }

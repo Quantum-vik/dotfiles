@@ -1,12 +1,13 @@
 #!/bin/bash
-# Fan modes for HP laptops whose firmware only offers "auto" or "full speed" (hp-wmi pwm1_enable 2 / 0).
+# Fan modes for HP laptops (hp-wmi). The firmware fan curve can't be overridden: the HP 250R G10 accepts
+# pwm1_enable=0 ("full speed") and reads it back, but its EC ignores it; a load test showed the fan still
+# waiting for heat and ramping on the normal curve. The only real lever is how much heat the CPU makes.
 #
-#   fan-mode status            mode=<auto|quiet|max> rpm=<n> temp=<°C>   (any user)
-#   fan-mode auto|quiet|max    switch mode (root; the polkit policy lets the desktop user run it via pkexec)
+#   fan-mode status            mode=<auto|quiet> rpm=<n> temp=<°C>   (any user)
+#   fan-mode auto|quiet        switch mode (root; the polkit policy lets the desktop user run it via pkexec)
 #
 #   auto   firmware fan curve, CPU limits back to what they were
 #   quiet  firmware fan curve, but turbo off and a 10 W CPU package limit, so there is less heat to blow away
-#   max    fan forced to full speed, CPU limits back to what they were
 #
 # Nothing persists: the firmware fan mode, turbo and CPU power limits all return to normal on reboot.
 # Installed to /usr/local/sbin/fan-mode by ~/dotfiles/linux/install.sh (step: fan).
@@ -60,9 +61,6 @@ case "${1:-status}" in
   auto)
     need_root auto
     echo 2 > "$HP/pwm1_enable"; restore_limits; echo auto > "$STATE"; status ;;
-  max)
-    need_root max
-    restore_limits; echo 0 > "$HP/pwm1_enable"; echo max > "$STATE"; status ;;
   quiet)
     need_root quiet
     echo 2 > "$HP/pwm1_enable"
@@ -71,5 +69,5 @@ case "${1:-status}" in
     [ "$(cat "$RAPL/constraint_0_power_limit_uw")" -le "$QUIET_PL1_UW" ] \
       || echo "$QUIET_PL1_UW" > "$RAPL/constraint_0_power_limit_uw"
     echo quiet > "$STATE"; status ;;
-  *) echo "usage: fan-mode status|auto|quiet|max" >&2; exit 2 ;;
+  *) echo "usage: fan-mode status|auto|quiet" >&2; exit 2 ;;
 esac
