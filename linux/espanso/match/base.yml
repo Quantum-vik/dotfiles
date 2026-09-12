@@ -1,0 +1,7 @@
+# Ported from macOS NSUserDictionaryReplacementItems (parity sheet §6).
+# macOS fires on the bare word, so `word: true` reproduces that behaviour
+# rather than espanso's default colon-prefix triggers.
+matches:
+  - trigger: "omw"
+    replace: "On my way!"
+    word: true

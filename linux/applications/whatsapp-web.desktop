@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=WhatsApp
+GenericName=Instant Messaging
+Comment=WhatsApp Web in a standalone window
+Exec=/usr/bin/google-chrome-stable --app=https://web.whatsapp.com/ --class=whatsapp-web --name=whatsapp-web
+Icon=whatsapp-web
+Terminal=false
+StartupNotify=true
+StartupWMClass=whatsapp-web
+Categories=Network;InstantMessaging;Chat;
+Keywords=whatsapp;chat;message;messaging;

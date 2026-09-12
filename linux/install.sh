@@ -1,0 +1,282 @@
+#!/usr/bin/env bash
+# Rebuild this Linux desktop on a fresh Ubuntu 24.04 (GNOME 46, Wayland).
+#
+#   ./install.sh                     run every step, in order
+#   ./install.sh configs gnome       run only the named steps
+#
+# Steps: packages  tools  desktop  configs  gnome
+#
+# Safe to re-run: each step skips work that is already done, and any existing file
+# that differs from the repo is moved to <file>.bak-<timestamp>, never deleted.
+# This script contains no credentials. See README.md for what to restore by hand.
+set -euo pipefail
+
+DOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"     # .../dotfiles/linux
+REPO="$(dirname "$DOT")"                                # .../dotfiles
+TS="$(date +%Y%m%d-%H%M%S)"
+TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
+
+log()  { printf '\n\033[1;36m==> %s\033[0m\n' "$*"; }
+info() { printf '    %s\n' "$*"; }
+warn() { printf '\033[1;33m    ! %s\033[0m\n' "$*"; }
+have() { command -v "$1" >/dev/null 2>&1; }
+list() { grep -vE '^\s*(#|$)' "$1"; }
+gpg_fpr() { gpg --show-keys --with-colons "$1" 2>/dev/null | awk -F: '/^fpr/{print $10; exit}'; }
+
+# Symlink src -> dst. A dst with identical content is replaced; a differing one is backed up.
+link() {
+  local src="$1" dst="$2"
+  mkdir -p "$(dirname "$dst")"
+  if [ -L "$dst" ] && [ "$(readlink -f "$dst")" = "$(readlink -f "$src")" ]; then
+    info "ok       ${dst/#$HOME/\~}"; return
+  fi
+  if [ -e "$dst" ] || [ -L "$dst" ]; then
+    if cmp -s "$src" "$dst"; then rm -f "$dst"
+    else mv "$dst" "$dst.bak-$TS"; warn "backed up ${dst/#$HOME/\~} -> .bak-$TS"; fi
+  fi
+  ln -s "$src" "$dst"; info "linked   ${dst/#$HOME/\~}"
+}
+
+# Copy src -> dst only when dst is missing (for apps that rewrite their own config).
+seed() {
+  local src="$1" dst="$2" mode="${3:-644}"
+  if [ -e "$dst" ]; then info "exists   ${dst/#$HOME/\~} (left alone)"; return; fi
+  install -D -m "$mode" "$src" "$dst"; info "seeded   ${dst/#$HOME/\~}"
+}
+
+# ---------------------------------------------------------------------------
+step_packages() {
+  sudo -v
+  . /etc/os-release
+
+  log "apt repositories: VS Code, pgAdmin (signing keys checked against pinned fingerprints)"
+  curl -fsSL https://packages.microsoft.com/keys/microsoft.asc -o "$TMP/ms.asc"
+  [ "$(gpg_fpr "$TMP/ms.asc")" = "BC528686B50D79E339D3721CEB3E94ADBE1229CF" ] || { warn "Microsoft key fingerprint mismatch"; exit 1; }
+  gpg --dearmor < "$TMP/ms.asc" > "$TMP/ms.gpg"
+  sudo install -D -m 644 "$TMP/ms.gpg" /usr/share/keyrings/microsoft.gpg
+  printf 'Types: deb\nURIs: https://packages.microsoft.com/repos/code\nSuites: stable\nComponents: main\nArchitectures: amd64\nSigned-By: /usr/share/keyrings/microsoft.gpg\n' \
+    | sudo tee /etc/apt/sources.list.d/vscode.sources >/dev/null
+
+  curl -fsSL https://www.pgadmin.org/static/packages_pgadmin_org.pub -o "$TMP/pga.asc"
+  [ "$(gpg_fpr "$TMP/pga.asc")" = "E8697E2EEF76C02D3A6332778881B2A8210976F2" ] || { warn "pgAdmin key fingerprint mismatch"; exit 1; }
+  gpg --dearmor < "$TMP/pga.asc" > "$TMP/pga.gpg"
+  sudo install -D -m 644 "$TMP/pga.gpg" /usr/share/keyrings/packages-pgadmin-org.gpg
+  printf 'Types: deb\nURIs: https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/%s\nSuites: pgadmin4\nComponents: main\nArchitectures: amd64\nSigned-By: /usr/share/keyrings/packages-pgadmin-org.gpg\n' "$VERSION_CODENAME" \
+    | sudo tee /etc/apt/sources.list.d/pgadmin4.sources >/dev/null
+
+  log "apt packages ($(list "$DOT/packages/apt.txt" | wc -l) + code + pgadmin4-desktop)"
+  sudo apt-get update
+  # shellcheck disable=SC2046
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y $(list "$DOT/packages/apt.txt") code pgadmin4-desktop
+
+  log "Flathub apps"
+  flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+  list "$DOT/packages/flatpak.txt" | xargs -r flatpak install --user -y --noninteractive flathub
+}
+
+# ---------------------------------------------------------------------------
+step_tools() {
+  sudo -v
+  mkdir -p "$HOME/.local/bin"
+
+  log "Go (latest stable, sha256 from go.dev)"
+  if [ -x /usr/local/go/bin/go ]; then info "present: $(/usr/local/go/bin/go version)"; else
+    curl -fsSL 'https://go.dev/dl/?mode=json' -o "$TMP/go.json"
+    read -r GOFILE GOSHA < <(jq -r '[.[] | select(.stable)][0].files[]
+      | select(.os=="linux" and .arch=="amd64" and .kind=="archive") | "\(.filename) \(.sha256)"' "$TMP/go.json")
+    curl -fsSL "https://go.dev/dl/$GOFILE" -o "$TMP/$GOFILE"
+    echo "$GOSHA  $TMP/$GOFILE" | sha256sum -c -
+    sudo tar -C /usr/local -xzf "$TMP/$GOFILE"
+    echo 'export PATH="$PATH:/usr/local/go/bin"' | sudo tee /etc/profile.d/go.sh >/dev/null
+  fi
+
+  log "uv"
+  have uv || [ -x "$HOME/.local/bin/uv" ] || curl -LsSf https://astral.sh/uv/install.sh | sh
+
+  log "lazygit (sha256 from release checksums.txt)"
+  if have lazygit; then info "present"; else
+    curl -fsSL https://api.github.com/repos/jesseduffield/lazygit/releases/latest -o "$TMP/lg.json"
+    LGURL=$(jq -r '.assets[] | select(.name|test("linux_x86_64\\.tar\\.gz$")) | .browser_download_url' "$TMP/lg.json")
+    SUMURL=$(jq -r '.assets[] | select(.name=="checksums.txt") | .browser_download_url' "$TMP/lg.json")
+    ( cd "$TMP" && curl -fsSLO "$LGURL" && curl -fsSL "$SUMURL" -o sums.txt \
+        && grep " $(basename "$LGURL")\$" sums.txt | sha256sum -c - && tar xzf "$(basename "$LGURL")" lazygit )
+    sudo install -m 0755 "$TMP/lazygit" /usr/local/bin/lazygit
+  fi
+
+  log "kubectl (sha256 from dl.k8s.io)"
+  if have kubectl; then info "present"; else
+    KV=$(curl -fsSL https://dl.k8s.io/release/stable.txt)
+    ( cd "$TMP" && curl -fsSLO "https://dl.k8s.io/release/$KV/bin/linux/amd64/kubectl" \
+        && echo "$(curl -fsSL "https://dl.k8s.io/release/$KV/bin/linux/amd64/kubectl.sha256")  kubectl" | sha256sum -c - )
+    sudo install -m 0755 "$TMP/kubectl" /usr/local/bin/kubectl
+  fi
+
+  log "AWS CLI v2"
+  if have aws; then info "present"; else
+    ( cd "$TMP" && curl -fsSL https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o aws.zip \
+        && unzip -q aws.zip && sudo ./aws/install --update )
+  fi
+
+  log "espanso (Wayland build)"
+  if have espanso; then info "present"; else
+    URL=$(curl -fsSL https://api.github.com/repos/espanso/espanso/releases/latest \
+          | jq -r '.assets[] | select(.name=="espanso-debian-wayland-amd64.deb") | .browser_download_url')
+    curl -fsSL "$URL" -o "$TMP/espanso.deb"
+    sudo apt-get install -y "$TMP/espanso.deb"
+    sudo setcap "cap_dac_override+p" "$(command -v espanso)" || true
+  fi
+
+  log "Postman (official tarball in ~/.local/share so its self-updater works)"
+  if [ -x "$HOME/.local/share/Postman/Postman" ]; then info "present"; else
+    curl -fsSL https://dl.pstmn.io/download/latest/linux_64 -o "$TMP/postman.tgz"
+    mkdir -p "$HOME/.local/share/Postman"
+    tar xzf "$TMP/postman.tgz" -C "$HOME/.local/share/Postman" --strip-components=1
+    ln -sf "$HOME/.local/share/Postman/Postman" "$HOME/.local/bin/postman"
+  fi
+
+  log "Oh My Zsh + Powerlevel10k (the repo's .zshrc is kept)"
+  if [ -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then info "Oh My Zsh present"; else
+    RUNZSH=no CHSH=no KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+  fi
+  [ -d "$HOME/.oh-my-zsh/custom/themes/powerlevel10k" ] \
+    || git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$HOME/.oh-my-zsh/custom/themes/powerlevel10k"
+
+  log "tmux plugin manager"
+  [ -d "$HOME/.tmux/plugins/tpm" ] || git clone --depth=1 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+
+  log "login shell -> zsh, default terminal -> kitty"
+  [ "$(getent passwd "$USER" | cut -d: -f7)" = "$(command -v zsh)" ] || sudo chsh -s "$(command -v zsh)" "$USER"
+  sudo update-alternatives --set x-terminal-emulator /usr/bin/kitty
+}
+
+# ---------------------------------------------------------------------------
+step_desktop() {
+  local fonts="$HOME/.local/share/fonts" ws="$TMP/whitesur"
+  mkdir -p "$ws"
+
+  log "fonts: MesloLGS NF (Powerlevel10k glyphs), Monocraft (VS Code editor)"
+  mkdir -p "$fonts/MesloLGS-NF" "$fonts/Monocraft"
+  for v in Regular Bold Italic "Bold Italic"; do
+    f="$fonts/MesloLGS-NF/MesloLGS NF $v.ttf"
+    [ -f "$f" ] || curl -fsSL -o "$f" "https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20${v// /%20}.ttf"
+  done
+  if [ -z "$(ls -A "$fonts/Monocraft" 2>/dev/null)" ]; then
+    curl -fsSL https://api.github.com/repos/IdreesInc/Monocraft/releases/latest -o "$TMP/mc.json"
+    url=$(jq -r '.assets[] | select(.name=="Monocraft-ttf.zip") | .browser_download_url' "$TMP/mc.json")
+    sha=$(jq -r '.assets[] | select(.name=="Monocraft-ttf.zip") | .digest' "$TMP/mc.json" | sed 's/^sha256://')
+    curl -fsSL "$url" -o "$TMP/mc.zip"
+    echo "$sha  $TMP/mc.zip" | sha256sum -c -
+    unzip -qjo "$TMP/mc.zip" '*.ttf' -d "$fonts/Monocraft"
+  fi
+  fc-cache -f
+
+  wsrepo() { [ -d "$ws/$1" ] || git clone -q --depth=1 "https://github.com/vinceliuice/$1.git" "$ws/$1"; }
+
+  log "WhiteSur GTK + shell theme, icons, cursors"
+  # Do NOT run WhiteSur's tweaks.sh -d: it rewrites the dock settings.
+  [ -d "$HOME/.themes/WhiteSur-Dark" ] || { wsrepo WhiteSur-gtk-theme; ( cd "$ws/WhiteSur-gtk-theme" && ./install.sh -c dark -l ); }
+  [ -d "$HOME/.local/share/icons/WhiteSur-dark" ] || { wsrepo WhiteSur-icon-theme; ( cd "$ws/WhiteSur-icon-theme" && ./install.sh -t default ); }
+  [ -d "$HOME/.local/share/icons/WhiteSur-cursors" ] || { wsrepo WhiteSur-cursors; ( cd "$ws/WhiteSur-cursors" && ./install.sh ); }
+
+  log "macOS-style dynamic wallpapers"
+  # The wallpaper installer never creates this directory, so cp writes a *file* with its name.
+  local props="$HOME/.local/share/gnome-background-properties"
+  [ -f "$props" ] && rm -f "$props"
+  mkdir -p "$props"
+  [ -d "$HOME/.local/share/backgrounds/Sonoma" ] || { wsrepo WhiteSur-wallpapers; ( cd "$ws/WhiteSur-wallpapers" && ./install-gnome-backgrounds.sh -s 1080p ); }
+
+  log "kitty background image (Sonoma dark, cropped to 16:9; kitty 0.32 needs PNG)"
+  if [ -f "$HOME/.config/kitty/sonoma-dark.png" ]; then info "present"; else
+    mkdir -p "$HOME/.config/kitty"
+    python3 - <<'PY'
+import gi, os
+gi.require_version('GdkPixbuf', '2.0')
+from gi.repository import GdkPixbuf
+p = os.path.expanduser
+pb = GdkPixbuf.Pixbuf.new_from_file(p("~/.local/share/backgrounds/Sonoma/Sonoma-dark.jpg"))
+w = pb.get_width()
+crop = pb.new_subpixbuf(0, int(pb.get_height() * 0.30), w, w * 9 // 16)
+crop.scale_simple(1920, 1080, GdkPixbuf.InterpType.HYPER).savev(p("~/.config/kitty/sonoma-dark.png"), "png", [], [])
+PY
+  fi
+
+  log "PWA icons for WhatsApp and Teams launchers"
+  local ic="$HOME/.local/share/icons/hicolor"
+  mkdir -p "$ic/512x512/apps" "$ic/256x256/apps"
+  [ -f "$ic/512x512/apps/whatsapp-web.png" ] || curl -fsSL https://web.whatsapp.com/whatsapp_pwa_icon_512.png -o "$ic/512x512/apps/whatsapp-web.png"
+  [ -f "$ic/256x256/apps/teams-web.png" ]    || curl -fsSL "https://www.google.com/s2/favicons?domain=teams.microsoft.com&sz=256" -o "$ic/256x256/apps/teams-web.png"
+  gtk-update-icon-cache -f -t "$ic" >/dev/null 2>&1 || true
+
+  log "GNOME extensions from extensions.gnome.org (active after next login)"
+  local shellv; shellv=$(gnome-shell --version | awk '{print int($3)}')
+  while read -r uuid pk; do
+    case "$uuid" in \#*|"") continue ;; esac
+    if [ -d "$HOME/.local/share/gnome-shell/extensions/$uuid" ]; then info "ok       $uuid"; continue; fi
+    dl=$(curl -fsSL "https://extensions.gnome.org/extension-info/?pk=$pk&shell_version=$shellv" | jq -r '.download_url')
+    curl -fsSL "https://extensions.gnome.org$dl" -o "$TMP/ext.zip"
+    gnome-extensions install --force "$TMP/ext.zip"; info "installed $uuid"
+  done < "$DOT/packages/gnome-extensions.txt"
+}
+
+# ---------------------------------------------------------------------------
+step_configs() {
+  log "symlinked configs (editing them edits this repo)"
+  link "$DOT/shell/zshrc"        "$HOME/.zshrc"
+  link "$DOT/shell/zshenv"       "$HOME/.zshenv"
+  link "$DOT/shell/p10k.zsh"     "$HOME/.p10k.zsh"
+  if [ -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
+    link "$DOT/shell/aliases.zsh" "$HOME/.oh-my-zsh/custom/aliases.zsh"
+  else
+    warn "Oh My Zsh not installed yet: run the 'tools' step, then 'configs' again for aliases.zsh"
+  fi
+  link "$DOT/kitty/kitty.conf"   "$HOME/.config/kitty/kitty.conf"
+  link "$REPO/tmux/tmux.conf"    "$HOME/.tmux.conf"
+  for f in settings.json keybindings.json statusline.sh; do link "$REPO/claude/$f" "$HOME/.claude/$f"; done
+
+  log "seeded configs (written only if missing; these apps rewrite their own files)"
+  seed "$DOT/espanso/match/base.yml"      "$HOME/.config/espanso/match/base.yml"
+  seed "$DOT/espanso/config/default.yml"  "$HOME/.config/espanso/config/default.yml"
+  seed "$DOT/copyq/copyq.conf"            "$HOME/.config/copyq/copyq.conf"
+  mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
+  seed "$DOT/ssh/config"                  "$HOME/.ssh/config" 600
+  seed "$DOT/git/gitconfig"               "$HOME/.gitconfig"
+  seed "$DOT/git/gitconfig-personal"      "$HOME/.gitconfig-personal"
+  if grep -qE '@[A-Z_]+@' "$HOME/.gitconfig" "$HOME/.gitconfig-personal" 2>/dev/null; then
+    warn "fill in the @NAME@/@EMAIL@ placeholders in ~/.gitconfig and ~/.gitconfig-personal"
+  fi
+
+  log "desktop launchers, default terminal list, helper scripts"
+  mkdir -p "$HOME/.local/share/applications" "$HOME/.config/mac-parity-backup"
+  for f in "$DOT"/applications/*.desktop; do
+    sed "s|@HOME@|$HOME|g" "$f" > "$HOME/.local/share/applications/$(basename "$f")"
+  done
+  update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
+  install -m 644 "$DOT/gnome/GNOME-xdg-terminals.list" "$HOME/.config/GNOME-xdg-terminals.list"
+  install -m 755 "$DOT"/scripts/*.sh "$HOME/.config/mac-parity-backup/"
+
+  log "tmux plugins, espanso service"
+  [ -x "$HOME/.tmux/plugins/tpm/bin/install_plugins" ] && "$HOME/.tmux/plugins/tpm/bin/install_plugins" >/dev/null || true
+  if have espanso; then espanso service register >/dev/null 2>&1 || true; fi
+}
+
+# ---------------------------------------------------------------------------
+step_gnome() {
+  log "GNOME settings: dock, hot corners, shortcuts, touchpad, theme, fonts, wallpaper, terminal profile"
+  sed "s|@HOME@|$HOME|g" "$DOT/gnome/desktop.dconf" | dconf load /
+  info "log out and back in once so GNOME Shell loads the extensions and shell theme"
+}
+
+# ---------------------------------------------------------------------------
+main() {
+  [ "$(id -u)" -ne 0 ] || { echo "Run as your normal user; the script calls sudo where it needs to."; exit 1; }
+  local steps=("$@")
+  [ ${#steps[@]} -gt 0 ] || steps=(packages tools desktop configs gnome)
+  for s in "${steps[@]}"; do
+    case "$s" in
+      packages|tools|desktop|configs|gnome) "step_$s" ;;
+      *) echo "Unknown step '$s'. Steps: packages tools desktop configs gnome"; exit 1 ;;
+    esac
+  done
+  log "done: ${steps[*]}"
+}
+main "$@"

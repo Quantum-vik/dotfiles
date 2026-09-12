@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Postman
+GenericName=API Client
+Comment=Build, test and document APIs
+Exec=@HOME@/.local/share/Postman/Postman %U
+Icon=@HOME@/.local/share/Postman/app/resources/app/assets/icon.png
+Terminal=false
+StartupWMClass=Postman
+Categories=Development;
+Keywords=api;rest;http;graphql;

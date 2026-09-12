@@ -1,0 +1,13 @@
+# Personal GitHub — QuantumVik / Quantum-vik
+Host github.com
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/QuantumVik_github
+    IdentitiesOnly yes
+
+# Work GitHub account. NOT a real domain — local alias only.
+Host sp.github.com
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/vikrant-singh-solytics_github
+    IdentitiesOnly yes

@@ -2,6 +2,10 @@
 
 Personal configuration files.
 
+- [`linux/`](linux/) — full Ubuntu 24.04 GNOME desktop setup with an installer. Start there on a new Linux machine.
+- [`tmux/`](tmux/) — tmux config (also linked by `linux/install.sh`).
+- [`claude/`](claude/) — Claude Code settings, keybindings, statusline.
+
 ## tmux
 
 `tmux/tmux.conf` — symlink it into place:

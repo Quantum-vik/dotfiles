@@ -1,0 +1,7 @@
+# uv / user-local binaries.
+# Checklist #5: the Mac version hardcoded /Users/quantum — use $HOME so this file
+# is portable across machines and usernames.
+export PATH="$HOME/.local/bin:$PATH"
+
+# Rust toolchain, only if installed (not present on this machine yet)
+[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"

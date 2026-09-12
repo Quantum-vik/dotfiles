@@ -1,0 +1,2 @@
+# Flathub apps (installed with --user)
+io.missioncenter.MissionCenter
