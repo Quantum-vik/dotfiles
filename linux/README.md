@@ -31,7 +31,7 @@ shell/         zshrc  zshenv  aliases.zsh  p10k.zsh        -> symlinked
 kitty/         kitty.conf                                   -> symlinked
 espanso/       match/base.yml  config/default.yml           -> seeded
 copyq/         copyq.conf                                   -> seeded
-git/           gitconfig  gitconfig-personal   (identity placeholders)
+git/           gitconfig  gitconfig-personal   (work identity global, personal under ~/WorkPersonal and ~/dotfiles)
 ssh/           config          (host aliases only, no keys)
 applications/  whatsapp-web  teams-web  postman  .desktop
 scripts/       revert-whitesur.sh  revert-ctrl-arrows.sh  verify-hot-corners.sh
@@ -57,7 +57,6 @@ Restore these by hand. Never commit them here; this repo is public.
 | What | Where it lives |
 |---|---|
 | SSH private keys | `~/.ssh/*_github` — generate new ones and add them to GitHub |
-| Git name and email | fill the placeholders in `~/.gitconfig` and `~/.gitconfig-personal` |
 | Kubernetes configs | `~/.kube/` (contain client certificates) |
 | AWS credentials | `~/.aws/credentials` and `~/.aws/config` |
 | Postgres passwords | `~/.pgpass` |

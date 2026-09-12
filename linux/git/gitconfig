@@ -1,6 +1,6 @@
 [user]
-	name  = @WORK_NAME@
-	email = @WORK_EMAIL@
+	name  = vikrant-singh-solytics
+	email = vikrant.singh@solytics-partners.com
 
 [pull]
 	rebase = true
