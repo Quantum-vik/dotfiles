@@ -13,7 +13,7 @@ Then log out and back in once (GNOME loads new extensions and the shell theme on
 
 | Step | What it does |
 |---|---|
-| `packages` | Adds the VS Code and pgAdmin apt repos (signing keys checked against pinned fingerprints), installs `packages/apt.txt`, Flathub apps from `packages/flatpak.txt` |
+| `packages` | Adds the VS Code, pgAdmin and Docker apt repos (signing keys checked against pinned fingerprints), installs `packages/apt.txt` plus Docker Engine (not Desktop) with you in the `docker` group, and Flathub apps from `packages/flatpak.txt` |
 | `tools` | Go, uv, lazygit, kubectl, AWS CLI, espanso (Wayland), Postman, Oh My Zsh + Powerlevel10k, tmux TPM; sets zsh as login shell and kitty as default terminal. Downloads are checksum-verified where the vendor publishes one |
 | `desktop` | MesloLGS NF + Monocraft fonts, WhiteSur theme/icons/cursors, macOS-style dynamic wallpapers, kitty's background image, GNOME extensions from `packages/gnome-extensions.txt` |
 | `configs` | Symlinks shell, kitty, tmux and Claude Code configs into this repo; seeds app configs that rewrite themselves; installs launchers and helper scripts |

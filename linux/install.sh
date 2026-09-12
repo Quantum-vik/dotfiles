@@ -49,7 +49,7 @@ step_packages() {
   sudo -v
   . /etc/os-release
 
-  log "apt repositories: VS Code, pgAdmin (signing keys checked against pinned fingerprints)"
+  log "apt repositories: VS Code, pgAdmin, Docker (signing keys checked against pinned fingerprints)"
   curl -fsSL https://packages.microsoft.com/keys/microsoft.asc -o "$TMP/ms.asc"
   [ "$(gpg_fpr "$TMP/ms.asc")" = "BC528686B50D79E339D3721CEB3E94ADBE1229CF" ] || { warn "Microsoft key fingerprint mismatch"; exit 1; }
   gpg --dearmor < "$TMP/ms.asc" > "$TMP/ms.gpg"
@@ -64,10 +64,22 @@ step_packages() {
   printf 'Types: deb\nURIs: https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/%s\nSuites: pgadmin4\nComponents: main\nArchitectures: amd64\nSigned-By: /usr/share/keyrings/packages-pgadmin-org.gpg\n' "$VERSION_CODENAME" \
     | sudo tee /etc/apt/sources.list.d/pgadmin4.sources >/dev/null
 
-  log "apt packages ($(list "$DOT/packages/apt.txt" | wc -l) + code + pgadmin4-desktop)"
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o "$TMP/docker.asc"
+  [ "$(gpg_fpr "$TMP/docker.asc")" = "9DC858229FC7DD38854AE2D88D81803C0EBFCD88" ] || { warn "Docker key fingerprint mismatch"; exit 1; }
+  sudo install -m 0755 -d /etc/apt/keyrings
+  sudo install -m 0644 "$TMP/docker.asc" /etc/apt/keyrings/docker.asc
+  printf 'Types: deb\nURIs: https://download.docker.com/linux/ubuntu\nSuites: %s\nComponents: stable\nArchitectures: amd64\nSigned-By: /etc/apt/keyrings/docker.asc\n' "$VERSION_CODENAME" \
+    | sudo tee /etc/apt/sources.list.d/docker.sources >/dev/null
+
+  log "apt packages ($(list "$DOT/packages/apt.txt" | wc -l) + code + pgadmin4-desktop + Docker Engine)"
   sudo apt-get update
   # shellcheck disable=SC2046
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y $(list "$DOT/packages/apt.txt") code pgadmin4-desktop
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y $(list "$DOT/packages/apt.txt") code pgadmin4-desktop \
+    docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+  log "Docker: run without sudo (docker group is root-equivalent; takes effect at next login)"
+  sudo usermod -aG docker "$USER"
+  sudo systemctl enable --now docker containerd
 
   log "Flathub apps"
   flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
