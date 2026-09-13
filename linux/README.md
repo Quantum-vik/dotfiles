@@ -92,8 +92,10 @@ A cap only takes effect while the CPU would otherwise draw more than it (heavy w
   views ask for your password via pkexec (nethogs/iotop). No GPU module: Astra only supports AMD/NVIDIA.
 - **GNOME Terminal**: MesloLGS NF, matching dark palette, opaque.
 - **Charger notifications**: [poweralertd](https://sr.ht/~kennylevinsen/poweralertd) runs as a user service
-  (`power/poweralertd.service`) with `-s -S -i battery`, so it only says *Power supply online/offline*. Ubuntu packages
-  0.2.0, which has no options and also announces every battery state and Bluetooth device, so `tools` builds 0.3.0.
+  (`power/poweralertd.service`) with `-S -i battery`, so it only says *Power supply online/offline*: once at login, then
+  on every change. Don't add `-s`: poweralertd then never finishes connecting to the session bus, which drops it, and
+  the first charger event crashes it. Ubuntu packages 0.2.0, which has no options and also announces every battery
+  state and Bluetooth device, so `tools` builds 0.3.0.
 - **Reopen apps after logout/restart**: [Another Window Session Manager](https://github.com/nlpsuge/gnome-shell-extension-another-window-session-manager)
   saves the open apps and windows when you log out, restart or power off, and reopens them at the next login
   without asking, back on their workspaces at their size and position. Apps restore their own contents only if
