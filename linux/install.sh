@@ -146,6 +146,17 @@ step_tools() {
     ln -sf "$HOME/.local/share/Postman/Postman" "$HOME/.local/bin/postman"
   fi
 
+  log "poweralertd 0.3.0 (charger notifications; Ubuntu's 0.2.0 has no options to limit it)"
+  if [ -x "$HOME/.local/bin/poweralertd" ]; then info "present"; else
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y meson ninja-build libsystemd-dev
+    git clone -q --depth 1 --branch 0.3.0 https://git.sr.ht/~kennylevinsen/poweralertd "$TMP/poweralertd"
+    [ "$(git -C "$TMP/poweralertd" rev-parse HEAD)" = 2b54c6486b5dd73588a9626f3b211d2ace061fe8 ] \
+      || { warn "poweralertd 0.3.0 is not the pinned commit"; exit 1; }
+    meson setup "$TMP/poweralertd/build" "$TMP/poweralertd" --buildtype=release -Dman-pages=disabled >/dev/null
+    ninja -C "$TMP/poweralertd/build" >/dev/null
+    install -D -m 755 "$TMP/poweralertd/build/poweralertd" "$HOME/.local/bin/poweralertd"
+  fi
+
   log "Oh My Zsh + Powerlevel10k (the repo's .zshrc is kept)"
   if [ -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then info "Oh My Zsh present"; else
     RUNZSH=no CHSH=no KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
@@ -286,6 +297,15 @@ step_configs() {
   log "tmux plugins, espanso service"
   [ -x "$HOME/.tmux/plugins/tpm/bin/install_plugins" ] && "$HOME/.tmux/plugins/tpm/bin/install_plugins" >/dev/null || true
   if have espanso; then espanso service register >/dev/null 2>&1 || true; fi
+
+  log "charger connect/disconnect notifications (poweralertd user service)"
+  install -D -m 644 "$DOT/power/poweralertd.service" "$HOME/.config/systemd/user/poweralertd.service"
+  systemctl --user daemon-reload
+  if [ -x "$HOME/.local/bin/poweralertd" ]; then
+    systemctl --user enable --now poweralertd.service >/dev/null 2>&1 || warn "could not start poweralertd.service"
+  else
+    warn "poweralertd not built yet: run the 'tools' step, then 'configs' again"
+  fi
 }
 
 # ---------------------------------------------------------------------------

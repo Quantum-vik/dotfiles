@@ -1,0 +1,19 @@
+# Desktop notification when the charger is connected or disconnected.
+# poweralertd 0.3.0 (https://sr.ht/~kennylevinsen/poweralertd), built by install.sh into ~/.local/bin:
+#   -s          no notifications for the state at startup
+#   -S          only power supplies (skips Bluetooth headphones, mice, ...)
+#   -i battery  skip battery charge/discharge/level messages; GNOME already warns about low battery
+[Unit]
+Description=Notify when the charger is connected or disconnected
+Documentation=https://sr.ht/~kennylevinsen/poweralertd
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/poweralertd -s -S -i battery
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target

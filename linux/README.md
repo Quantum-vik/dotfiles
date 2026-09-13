@@ -14,7 +14,7 @@ Then log out and back in once (GNOME loads new extensions and the shell theme on
 | Step | What it does |
 |---|---|
 | `packages` | Adds the VS Code, pgAdmin and Docker apt repos (signing keys checked against pinned fingerprints), installs `packages/apt.txt` plus Docker Engine (not Desktop) with you in the `docker` group, and Flathub apps from `packages/flatpak.txt`: Mission Center, ZapZap (WhatsApp), Teams for Linux |
-| `tools` | Go, uv, lazygit, kubectl, AWS CLI, espanso (Wayland), Postman, Citrix Workspace app (optional App Protection/deviceTRUST/EPA off; Ubuntu root CAs linked into its store), Oh My Zsh + Powerlevel10k, tmux TPM; sets zsh as login shell and kitty as default terminal. Downloads are checksum-verified where the vendor publishes one |
+| `tools` | Go, uv, lazygit, kubectl, AWS CLI, espanso (Wayland), Postman, poweralertd 0.3.0 (built from a pinned commit), Citrix Workspace app (optional App Protection/deviceTRUST/EPA off; Ubuntu root CAs linked into its store), Oh My Zsh + Powerlevel10k, tmux TPM; sets zsh as login shell and kitty as default terminal. Downloads are checksum-verified where the vendor publishes one |
 | `desktop` | MesloLGS NF + Monocraft fonts, WhiteSur theme/icons/cursors, macOS-style dynamic wallpapers, kitty's background image, GNOME extensions from `packages/gnome-extensions.txt` |
 | `configs` | Symlinks shell, kitty, tmux and Claude Code configs into this repo; seeds app configs that rewrite themselves; installs launchers and helper scripts |
 | `gnome` | Loads `gnome/desktop.dconf` |
@@ -38,6 +38,7 @@ ssh/           config          (host aliases only, no keys)
 applications/  postman.desktop
 pam/           fprintd-local   (fingerprint: 30 s per try, 3 tries)
 fan/           fan-mode  local.fan-mode.policy  fan-mode@quantumvik/   (HP fan modes)
+power/         poweralertd.service   (charger connect/disconnect notifications)
 scripts/       revert-whitesur.sh  revert-ctrl-arrows.sh  revert-fingerprint.sh  verify-hot-corners.sh  citrix-latest.py
 ```
 
@@ -90,6 +91,9 @@ A cap only takes effect while the CPU would otherwise draw more than it (heavy w
   and CPU-temperature graphs; click any of them for history and top processes. Per-process network/disk
   views ask for your password via pkexec (nethogs/iotop). No GPU module: Astra only supports AMD/NVIDIA.
 - **GNOME Terminal**: MesloLGS NF, matching dark palette, opaque.
+- **Charger notifications**: [poweralertd](https://sr.ht/~kennylevinsen/poweralertd) runs as a user service
+  (`power/poweralertd.service`) with `-s -S -i battery`, so it only says *Power supply online/offline*. Ubuntu packages
+  0.2.0, which has no options and also announces every battery state and Bluetooth device, so `tools` builds 0.3.0.
 - **Reopen apps after logout/restart**: [Another Window Session Manager](https://github.com/nlpsuge/gnome-shell-extension-another-window-session-manager)
   saves the open apps and windows when you log out, restart or power off, and reopens them at the next login
   without asking, back on their workspaces at their size and position. Apps restore their own contents only if
