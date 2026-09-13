@@ -40,3 +40,4 @@ fonts-inter
 lm-sensors
 nethogs
 iotop
+gnome-snapshot
