@@ -3,6 +3,7 @@
 Personal configuration files.
 
 - [`linux/`](linux/) — full Ubuntu 24.04 GNOME desktop setup with an installer. Start there on a new Linux machine.
+- [`omarchy/`](omarchy/) — the same setup on Omarchy 4 (Arch + Hyprland), reusing the configs in `linux/`.
 - [`tmux/`](tmux/) — tmux config (also linked by `linux/install.sh`).
 - [`claude/`](claude/) — Claude Code settings, keybindings, statusline.
 

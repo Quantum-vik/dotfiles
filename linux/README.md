@@ -2,6 +2,7 @@
 
 Everything needed to rebuild my Ubuntu 24.04 (GNOME 46, Wayland) setup, which was
 ported from a macOS machine. **No credentials live here** — see the bottom section.
+[`../omarchy/`](../omarchy/) rebuilds the same setup on Omarchy and links many of these files, so edits apply to both.
 
 ```bash
 git clone https://github.com/Quantum-vik/dotfiles.git ~/dotfiles

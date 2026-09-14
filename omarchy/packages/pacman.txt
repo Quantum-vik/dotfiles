@@ -1,0 +1,42 @@
+# Packages installed on top of Omarchy 4 with omarchy-pkg-add (Arch's repositories plus Omarchy's).
+# One per line; '#' comments ignored.
+# Omarchy already ships git, curl, jq, unzip, tmux, fzf, ripgrep, fd, bat, btop, lazygit, Docker, base-devel,
+# and (through mise) gh and claude, so they aren't listed.
+
+# Shell
+zsh
+zsh-autosuggestions
+zsh-syntax-highlighting
+
+# Terminals (install.sh makes kitty the default)
+kitty
+alacritty
+
+# Development. linux/install.sh downloads Go, kubectl and the AWS CLI; Arch packages them.
+go
+uv
+kubectl
+aws-cli-v2
+python-pipx
+wget
+# VS Code, from Omarchy's repository
+visual-studio-code-bin
+
+# Build tools for poweralertd
+meson
+ninja
+
+# Apps
+vlc
+vlc-plugins-all
+qbittorrent
+zim
+flatpak
+# GNOME Camera
+snapshot
+inter-font
+
+# Sensors and per-process network/disk use
+lm_sensors
+nethogs
+iotop

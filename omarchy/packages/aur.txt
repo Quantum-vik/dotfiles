@@ -1,0 +1,7 @@
+# AUR packages, installed with omarchy-pkg-aur-add (yay). One per line; '#' comments ignored.
+# Each is built from a script written by its AUR maintainer. Before a first install you can read it:
+#   yay -Gp <name>
+google-chrome
+pgadmin4-desktop
+espanso-wayland
+icaclient

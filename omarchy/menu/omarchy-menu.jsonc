@@ -1,0 +1,11 @@
+{
+  // Additions to the Omarchy menu (Super+Space). Linked from ~/dotfiles/omarchy/menu/omarchy-menu.jsonc.
+  // Format: see the comments in Omarchy's own template, $OMARCHY_PATH/config/omarchy/extensions/omarchy-menu.jsonc.
+
+  // Setup -> Fan: the HP fan modes from linux/fan (see linux/README.md "Fan modes"). The helper runs as root through
+  // pkexec; its polkit policy lets the person at the laptop do that without a password. Hidden where it isn't installed.
+  "setup.fan": {"icon":"󰈐","label":"Fan","description":"Auto / Cool / Quiet","aliases":["fan"],"when":"[[ -x /usr/local/sbin/fan-mode ]]"},
+  "setup.fan.auto": {"icon":"󰈐","label":"Auto","description":"Full speed","checked":"/usr/local/sbin/fan-mode status | grep -q '^mode=auto '","action":"pkexec /usr/local/sbin/fan-mode auto && omarchy-notification-send -g 󰈐 'Fan: Auto' 'Full speed'"},
+  "setup.fan.cool": {"icon":"󰈐","label":"Cool","description":"CPU capped at 15 W, 20 W bursts","checked":"/usr/local/sbin/fan-mode status | grep -q '^mode=cool '","action":"pkexec /usr/local/sbin/fan-mode cool && omarchy-notification-send -g 󰈐 'Fan: Cool' 'CPU capped at 15 W, 20 W bursts'"},
+  "setup.fan.quiet": {"icon":"󰈐","label":"Quiet","description":"Turbo off, 10 W, slow","checked":"/usr/local/sbin/fan-mode status | grep -q '^mode=quiet '","action":"pkexec /usr/local/sbin/fan-mode quiet && omarchy-notification-send -g 󰈐 'Fan: Quiet' 'Turbo off, 10 W, slow'"}
+}
