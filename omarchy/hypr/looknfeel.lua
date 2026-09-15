@@ -12,6 +12,14 @@ hl.config({
   },
 })
 
+-- No gaps between tiled windows or at the screen edges, as on the Mac (EnableTiledWindowMargins = 0).
+hl.config({
+  general = {
+    gaps_in = 0,
+    gaps_out = 0,
+  },
+})
+
 -- https://wiki.hypr.land/Configuring/Basics/Variables/#general
 -- hl.config({
 --   general = {

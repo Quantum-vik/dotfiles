@@ -27,3 +27,7 @@ hl.config({
     },
   },
 })
+
+-- Three- or four-finger horizontal swipe switches workspace, as on the Mac.
+hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
+hl.gesture({ fingers = 4, direction = "horizontal", action = "workspace" })
