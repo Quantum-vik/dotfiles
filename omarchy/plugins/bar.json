@@ -1,0 +1,95 @@
+{
+  "position": "top",
+  "transparent": false,
+  "centerAnchor": "omarchy.clock",
+  "layout": {
+    "left": [
+      {
+        "id": "omarchy.menu"
+      },
+      {
+        "id": "omarchy.workspaces"
+      },
+      {
+        "id": "huacnlee.which-key"
+      },
+      {
+        "id": "io.github.pjgeutjens.clockwork"
+      },
+      {
+        "id": "agx.screen-time"
+      },
+      {
+        "id": "omarchy.agents"
+      },
+      {
+        "id": "oliwier.agent-skills-manager"
+      },
+      {
+        "id": "io.github.randazraik.xray"
+      },
+      {
+        "id": "devgtv.docker"
+      },
+      {
+        "id": "sid.sessions"
+      },
+      {
+        "id": "zeru.portwatch"
+      },
+      {
+        "id": "jankeesvw.herdr"
+      },
+      {
+        "id": "robzolkos.github"
+      }
+    ],
+    "center": [
+      {
+        "id": "omarchy.indicators"
+      },
+      {
+        "id": "omarchy.clock",
+        "format": "dddd HH:mm",
+        "formatAlt": "d MMMM 'W'ww yyyy",
+        "verticalFormat": "HH\n—\nmm"
+      },
+      {
+        "id": "omarchy.keyboard-layout"
+      },
+      {
+        "id": "omarchy.weather"
+      },
+      {
+        "id": "omaplug"
+      },
+      {
+        "id": "omarchy.system-update"
+      }
+    ],
+    "right": [
+      {
+        "id": "omarchy.tray"
+      },
+      {
+        "id": "crmne.omastats",
+        "style": "both"
+      },
+      {
+        "id": "omarchy.bluetooth"
+      },
+      {
+        "id": "omarchy.network"
+      },
+      {
+        "id": "omarchy.audio"
+      },
+      {
+        "id": "omarchy.monitor"
+      },
+      {
+        "id": "omarchy.power"
+      }
+    ]
+  }
+}

@@ -19,6 +19,7 @@ Then reboot once: the login shell, the Docker group and poweralertd all start cl
 | `desktop` | MesloLGS NF + Monocraft fonts |
 | `configs` | Symlinks shell, tmux and Claude Code configs, and the Omarchy kitty config; seeds git, ssh and espanso configs; Postman launcher; charger notifications |
 | `hyprland` | Links `hypr/input.lua`, `hypr/bindings.lua` and `hypr/looknfeel.lua` (blur on) over Omarchy's empty override files |
+| `plugins` | Installs the shell plugins in `plugins/plugins.txt` and applies the bar layout in `plugins/bar.json`; warns when a plugin's code is newer than the reviewed commit |
 | `fingerprint` | Runs Omarchy's fingerprint setup (sudo, password dialogs, lock screen). Its `libfprint-git` knows this laptop's reader, so nothing is built by hand |
 | `fan` | HP laptops only: the Ubuntu fan helper and polkit policy, switched from **Omarchy menu → Setup → Fan** |
 
@@ -35,6 +36,7 @@ packages/  pacman.txt  aur.txt
 hypr/      input.lua  bindings.lua  looknfeel.lua  -> ~/.config/hypr/ (loaded after Omarchy's defaults)
 kitty/     kitty.conf                              -> ~/.config/kitty/ (follows the Omarchy theme)
 warp/      warp-fallback  .service  .timer         -> ~/.local/bin, ~/.config/systemd/user/ (WARP fallback)
+plugins/   plugins.txt  bar.json                   -> ~/.config/omarchy/plugins/, the bar in ~/.config/omarchy/shell.json
 menu/      omarchy-menu.jsonc                      -> ~/.config/omarchy/extensions/ (Setup -> Fan)
 ```
 
@@ -88,6 +90,35 @@ minute:
 | WARP switched off by hand | Leaves it off. Only a fallback it started itself is undone |
 
 Run `warp-fallback` in a terminal to see what it decides, or `journalctl --user -u warp-fallback` for its history.
+
+## Shell plugins
+
+`plugins/plugins.txt` lists the Omarchy shell plugins from [plugins.omarchy.org](https://plugins.omarchy.org), each
+pinned to the commit whose full source was read before it was installed. Plugins run unsandboxed inside
+`omarchy-shell` with your user's rights, and the marketplace's "Verified" label means automated checks passed, not a
+security audit. When a plugin's code moves past its pinned commit, the `plugins` step says so and prints the
+`git log -p` command to read the change. Update a plugin with `omarchy plugin update <id>`, which shows the diff
+first, then move its commit in `plugins.txt`.
+
+| Plugin | What it is for | Know before using |
+|---|---|---|
+| GitHub | PRs, reviews, issues, Actions in the bar | Notifications need `gh auth refresh -s notifications` |
+| Herdr | Running herdr servers and their agents | Deleting a stopped session takes one click |
+| Port Watch | Local dev servers and listening ports | Stops only your own processes, after a second click |
+| Session Browser | Resume Claude Code, Codex and other agent sessions | |
+| Docker | Running containers and their RAM limits | Hovering a row and pressing ←/→ changes its memory limit at once |
+| X-Ray | Trace a window, port, container or file to its process | Ctrl+P pauses the selected process without asking |
+| Agent Skills Manager | Every skill and MCP server the coding agents load | Read-only |
+| Toolroll | Offline JSON, JWT, hash and format tools | Saves each tool's last input to `~/.local/state/omarchy/toolroll.json`; don't paste secrets |
+| Clockwork | Pomodoro, stopwatch, timers | |
+| Screen Time | Per-app screen time | History stays local |
+| Omaplug | Browse, enable and remove plugins | Its Update buttons apply new code without showing it; update from a terminal |
+| Which Key | Shortcut guide while a modifier is held | Its keyboard hook refuses the symlinked `hypr/bindings.lua`, so the guide stays off |
+| OmaStats | CPU, memory, network in the bar; disks, sensors, battery in its panel | Looks up the public IP (ipify, icanhazip, ifconfig.me) on its Network tab; `omarchy bar set crmne.omastats publicIp false` stops it |
+
+`plugins/bar.json` is the bar layout: the coding widgets on the left after the workspaces, OmaStats and the system
+icons on the right. Without it every plugin lands on the right, which pushes the system icons past the screen edge on
+this laptop's 1200-point-wide bar.
 
 ## Status
 

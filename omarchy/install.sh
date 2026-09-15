@@ -4,7 +4,7 @@
 #   ./install.sh                     run every step, in order
 #   ./install.sh configs hyprland    run only the named steps
 #
-# Steps: packages  tools  desktop  configs  hyprland  fingerprint  fan
+# Steps: packages  tools  desktop  configs  hyprland  plugins  fingerprint  fan
 #
 # App configs (shell, tmux, git, ssh, espanso, Claude Code, fan helper, poweralertd unit) are the same files
 # ../linux/install.sh uses, so both machines stay in sync. Omarchy keeps its own theme, bar and launcher, and kitty
@@ -242,6 +242,40 @@ step_hyprland() {
 }
 
 # ---------------------------------------------------------------------------
+# Shell plugins from plugins/plugins.txt, then the bar layout from plugins/bar.json. Plugins run unsandboxed inside
+# omarchy-shell, so each line pins the commit that was read before install; a newer upstream commit gets a warning.
+step_plugins() {
+  local dir="$HOME/.config/omarchy/plugins" shell="$HOME/.config/omarchy/shell.json" id url commit head
+
+  log "Omarchy shell plugins ($(list "$DOT/plugins/plugins.txt" | wc -l), see plugins/plugins.txt)"
+  while read -r id url commit; do
+    if [ -d "$dir/$id/.git" ]; then
+      info "present  $id"
+    elif omarchy plugin add "$url" --enable --yes >/dev/null 2>&1; then
+      info "added    $id"
+    else
+      warn "could not add $id from $url"; continue
+    fi
+    head=$(git -C "$dir/$id" rev-parse HEAD 2>/dev/null)
+    [ "$head" = "$commit" ] \
+      || warn "$id is at ${head:0:7}, not the reviewed ${commit:0:7}; read: git -C ${dir/#$HOME/\~}/$id log -p ${commit:0:7}..HEAD"
+  done < <(list "$DOT/plugins/plugins.txt")
+
+  log "bar layout (plugins/bar.json), so the plugin widgets fit beside the clock"
+  if [ -f "$shell" ] && jq -e --slurpfile bar "$DOT/plugins/bar.json" '.bar == $bar[0]' "$shell" >/dev/null; then
+    info "ok       bar layout"; return
+  fi
+  if [ -f "$shell" ]; then
+    cp "$shell" "$shell.bak-$TS"; warn "backed up ~/.config/omarchy/shell.json -> .bak-$TS"
+  else
+    mkdir -p "$(dirname "$shell")"; echo '{}' > "$shell"
+  fi
+  jq --slurpfile bar "$DOT/plugins/bar.json" '.bar = $bar[0]' "$shell" > "$TMP/shell.json" && mv "$TMP/shell.json" "$shell"
+  omarchy-shell shell reloadConfig >/dev/null 2>&1 || true
+  info "applied  bar layout"
+}
+
+# ---------------------------------------------------------------------------
 # Omarchy's own setup covers this: it installs libfprint-git (1.94.100+, which knows the HP 250R G10's Synaptics
 # 06cb:0169), enrolls a finger, then adds fingerprint to sudo, polkit and the lock screen. pam_fprintd's
 # defaults already wait 30 s per try with 3 tries, the timing linux/pam/fprintd-local sets on Ubuntu.
@@ -272,11 +306,11 @@ main() {
   [ "$(id -u)" -ne 0 ] || { echo "Run as your normal user; the script calls sudo where it needs to."; exit 1; }
   have omarchy-pkg-add || { echo "This installer is for Omarchy. On Ubuntu use ../linux/install.sh."; exit 1; }
   local steps=("$@")
-  [ ${#steps[@]} -gt 0 ] || steps=(packages tools desktop configs hyprland fingerprint fan)
+  [ ${#steps[@]} -gt 0 ] || steps=(packages tools desktop configs hyprland plugins fingerprint fan)
   for s in "${steps[@]}"; do
     case "$s" in
-      packages|tools|desktop|configs|hyprland|fingerprint|fan) "step_$s" ;;
-      *) echo "Unknown step '$s'. Steps: packages tools desktop configs hyprland fingerprint fan"; exit 1 ;;
+      packages|tools|desktop|configs|hyprland|plugins|fingerprint|fan) "step_$s" ;;
+      *) echo "Unknown step '$s'. Steps: packages tools desktop configs hyprland plugins fingerprint fan"; exit 1 ;;
     esac
   done
   log "done: ${steps[*]}"

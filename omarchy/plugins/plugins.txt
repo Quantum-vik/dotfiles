@@ -1,0 +1,24 @@
+# Omarchy shell plugins from https://plugins.omarchy.org, installed by the `plugins` step of install.sh.
+# One per line: <plugin id> <git url> <reviewed commit>. '#' comments ignored.
+# Plugins run unsandboxed inside omarchy-shell. Each commit below had its full source read before it was installed
+# (README.md "Shell plugins"); the step warns when a plugin's code is newer than that, so the change gets read first.
+
+# Coding
+robzolkos.github                  https://github.com/robzolkos/omarchy-github.git                      64807fcd8ee40103ff3ba3d93dfa2051998fbc80
+jankeesvw.herdr                   https://github.com/jankeesvw/omarchy-herdr.git                       fa545a4f7a81767745dcbe9a65c2ef05bddd4b71
+zeru.portwatch                    https://github.com/ZerubbabelT/portwatch.git                         1123eb1a5fc31eccc48a394b42bdec89b6c86b62
+sid.sessions                      https://github.com/Sudhanshugtm/omarchy-session-browser.git          9d7e6b64b091f9ed908b151fd814df0ef23064c9
+devgtv.docker                     https://github.com/devgtv/omarchy-docker.git                         55c5d9225e6a178f20e2b5465875026a57589937
+io.github.randazraik.xray         https://github.com/RandaZraik/omarchy-xray.git                       520c1da26a278bede03285df617a50c8e17997b4
+oliwier.agent-skills-manager      https://github.com/oliwier-xiao/agent-skills-manager.git             953df2c1e819191b81d5b45872fc228e0d680dec
+io.github.iainfreestone.toolroll  https://github.com/iainfreestone/omarchy-toolroll.git                876bd40a13e7938f9239e8157a8d0f81bd02f97c
+
+# Productivity
+io.github.pjgeutjens.clockwork    https://github.com/pjgeutjens/omarchy-clockwork.git                  afaa28a80e884f93ff4279724d2170776da24bfe
+agx.screen-time                   https://github.com/ax1g/quickshell-screentime-plugin.git             03f0913f223e96244fbe1281f84685c9eeaecaa1
+omaplug                           https://github.com/fross100/omaplug.git                              bfdaedbb754d81b5613d0e9ec81c32f278191db0
+# Which Key's guide can't install its keyboard hook while ~/.config/hypr/bindings.lua is a symlink into this repo
+huacnlee.which-key                https://github.com/huacnlee/omarchy-which-key.git                    74d89a00ba5503762ac20f1aba9d33a410986c63
+
+# System monitor (its bundled sampler binary is attested by the repo's CI for this commit)
+crmne.omastats                    https://github.com/crmne/omastats.git                                5c6f91a9c0a74b14cc9a629429ef38eaa5b069c0
