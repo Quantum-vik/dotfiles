@@ -140,6 +140,13 @@ step_tools() {
     warp-cli --accept-tos mode warp >/dev/null
     warp-cli --accept-tos connect >/dev/null   # also sets Always On, so it reconnects after every reboot
     info "$(warp-cli --accept-tos status | head -1)"
+    # If Cloudflare stops passing traffic, warp-fallback switches to the normal connection and retries WARP later.
+    link "$DOT/warp/warp-fallback" "$HOME/.local/bin/warp-fallback"
+    for u in warp-fallback.service warp-fallback.timer; do
+      install -D -m 644 "$DOT/warp/$u" "$HOME/.config/systemd/user/$u"
+    done
+    systemctl --user daemon-reload
+    systemctl --user enable --now warp-fallback.timer >/dev/null 2>&1 && info "warp-fallback checks every minute"
   else
     warn "WARP not installed yet: run the 'packages' step, then 'tools' again"
   fi

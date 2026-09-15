@@ -15,7 +15,7 @@ Then reboot once: the login shell, the Docker group and poweralertd all start cl
 | Step | What it does |
 |---|---|
 | `packages` | `packages/pacman.txt` (Arch and Omarchy repositories), `packages/aur.txt` (Chrome, pgAdmin, espanso, Citrix Workspace, Cloudflare WARP), the Flathub apps from `../linux/packages/flatpak.txt`, and Docker without sudo through Omarchy's own prompt |
-| `tools` | Postman, poweralertd 0.3.0 (pinned commit), Oh My Zsh + Powerlevel10k, tmux TPM; sets zsh as login shell, kitty as the terminal for Super+Return, Chrome as default browser; tells VS Code to use GNOME Keyring; lets Citrix trust Arch's root certificates; turns Cloudflare WARP on at every boot |
+| `tools` | Postman, poweralertd 0.3.0 (pinned commit), Oh My Zsh + Powerlevel10k, tmux TPM; sets zsh as login shell, kitty as the terminal for Super+Return, Chrome as default browser; tells VS Code to use GNOME Keyring; lets Citrix trust Arch's root certificates; turns Cloudflare WARP on at every boot, with a fallback to the normal connection |
 | `desktop` | MesloLGS NF + Monocraft fonts |
 | `configs` | Symlinks shell, tmux and Claude Code configs, and the Omarchy kitty config; seeds git, ssh and espanso configs; Postman launcher; charger notifications |
 | `hyprland` | Links `hypr/input.lua`, `hypr/bindings.lua` and `hypr/looknfeel.lua` (blur on) over Omarchy's empty override files |
@@ -34,6 +34,7 @@ install.sh
 packages/  pacman.txt  aur.txt
 hypr/      input.lua  bindings.lua  looknfeel.lua  -> ~/.config/hypr/ (loaded after Omarchy's defaults)
 kitty/     kitty.conf                              -> ~/.config/kitty/ (follows the Omarchy theme)
+warp/      warp-fallback  .service  .timer         -> ~/.local/bin, ~/.config/systemd/user/ (WARP fallback)
 menu/      omarchy-menu.jsonc                      -> ~/.config/omarchy/extensions/ (Setup -> Fan)
 ```
 
@@ -75,6 +76,18 @@ PyPI download ran at 70–116 Mbit/s with no reordering, so the `tools` step tur
 All traffic then leaves through Cloudflare, and websites see a Cloudflare address. Local network devices stay outside
 the tunnel. `warp-cli disconnect` turns it off (for example if a work VPN or Citrix misbehaves); `warp-cli connect`
 turns it back on and keeps it on across reboots. On a connection without this problem, leave it off.
+
+If Cloudflare stops passing traffic, `warp/warp-fallback` keeps the internet working. A user timer runs it every
+minute:
+
+| Situation | What it does |
+|---|---|
+| WARP on, pages load | Nothing |
+| WARP on, nothing loads through it, but the normal connection works | Switches WARP off, notifies, and tries WARP again every 5 minutes; switches back once it works |
+| Nothing loads with or without WARP | Leaves WARP on: the connection itself is down, so switching would only flap |
+| WARP switched off by hand | Leaves it off. Only a fallback it started itself is undone |
+
+Run `warp-fallback` in a terminal to see what it decides, or `journalctl --user -u warp-fallback` for its history.
 
 ## Status
 

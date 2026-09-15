@@ -1,0 +1,7 @@
+# Switches Cloudflare WARP off when nothing loads through it, and back on once it works. See warp-fallback.
+[Unit]
+Description=Fall back to the normal connection when Cloudflare WARP breaks
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/warp-fallback

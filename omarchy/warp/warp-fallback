@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# Keeps the internet working when Cloudflare WARP breaks. Run every minute by warp-fallback.timer.
+# Linked to ~/.local/bin/warp-fallback by install.sh; run it by hand to see what it decides.
+#
+#   WARP on, but nothing loads through it          -> switch WARP off (normal ISP connection) and notify
+#     ...and nothing loads without it either        -> the connection itself is down: turn WARP back on, change nothing
+#   on the fallback                                 -> try WARP again every 5 minutes, keep it once it works
+#   WARP switched off by hand (warp-cli disconnect) -> left alone; only a fallback started here is undone here
+set -uo pipefail
+PATH="$PATH:${OMARCHY_PATH:-/usr/share/omarchy}/bin"
+
+STATE="${XDG_STATE_HOME:-$HOME/.local/state}/warp-fallback"
+MARKER="$STATE/active"   # exists while this script has WARP off; holds the time of the last retry
+RETRY_SECONDS=300
+# The URLs are overridable so the fallback can be tested without breaking Cloudflare.
+TUNNEL_CHECK_URLS=${WARP_FALLBACK_TUNNEL_URLS:-"https://www.google.com/generate_204 http://detectportal.firefox.com/success.txt"}
+DIRECT_CHECK_URLS=${WARP_FALLBACK_DIRECT_URLS:-$TUNNEL_CHECK_URLS}
+
+warp()   { warp-cli --accept-tos "$@" >/dev/null 2>&1; }
+status() { warp-cli --accept-tos status 2>/dev/null | sed -n 's/^Status update: //p' | head -1; }
+notify() { omarchy-notification-send -g 󰖂 "$1" "$2" 2>/dev/null || notify-send "$1" "$2" 2>/dev/null || true; }
+
+# Online when any of the URLs answers; the list is tried twice to ride out a single dropped request.
+online() {
+  local url
+  for _ in 1 2; do
+    for url in $1; do
+      curl -s -o /dev/null -m 6 -w '%{http_code}' "$url" 2>/dev/null | grep -qE '^(200|204)$' && return 0
+    done
+    sleep 3
+  done
+  return 1
+}
+
+wait_for() {  # wait_for <status> <seconds>
+  for _ in $(seq "$2"); do [ "$(status)" = "$1" ] && return 0; sleep 1; done
+  return 1
+}
+
+command -v warp-cli >/dev/null || exit 0
+mkdir -p "$STATE"
+current=$(status)
+
+if [ -f "$MARKER" ]; then
+  if [ "$current" = Connected ]; then
+    rm -f "$MARKER"            # WARP was turned back on by hand: check it like any other connection below
+  else
+    [ $(( $(date +%s) - $(cat "$MARKER") )) -ge $RETRY_SECONDS ] || exit 0
+    date +%s > "$MARKER"
+    online "$DIRECT_CHECK_URLS" || { echo "offline; retrying WARP later"; exit 0; }
+    warp connect
+    if wait_for Connected 20 && online "$TUNNEL_CHECK_URLS"; then
+      rm -f "$MARKER"
+      echo "WARP works again; back on it"
+      notify "WARP back on" "Cloudflare is passing traffic again."
+    else
+      warp disconnect
+      echo "WARP still not working; staying on the normal connection"
+    fi
+    exit 0
+  fi
+fi
+
+case "$current" in
+  Connected|Connecting) ;;
+  *) exit 0 ;;                 # off by hand, or the WARP service isn't running
+esac
+
+online "$TUNNEL_CHECK_URLS" && exit 0
+
+warp disconnect
+wait_for Disconnected 10
+if online "$DIRECT_CHECK_URLS"; then
+  date +%s > "$MARKER"
+  echo "nothing loads through WARP ($current) but the normal connection works: WARP off"
+  notify "WARP off, using the normal connection" "Cloudflare isn't passing traffic. Retrying every 5 minutes."
+else
+  warp connect
+  wait_for Connected 20
+  echo "no internet with or without WARP: the connection itself is down, WARP back on ($(status))"
+fi
