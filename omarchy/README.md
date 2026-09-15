@@ -114,9 +114,9 @@ first, then move its commit in `plugins.txt`.
 | Screen Time | Per-app screen time | History stays local |
 | Omaplug | Browse, enable and remove plugins | Its Update buttons apply new code without showing it; update from a terminal |
 | Which Key | Shortcut guide while a modifier is held | Its keyboard hook refuses the symlinked `hypr/bindings.lua`, so the guide stays off |
-| OmaStats | CPU, memory, network in the bar; disks, sensors, battery in its panel | Looks up the public IP (ipify, icanhazip, ifconfig.me) on its Network tab; `omarchy bar set crmne.omastats publicIp false` stops it |
+| OmaStats | One CPU readout in the bar; its dropdown has CPU, memory, disks, network, sensors and battery | Looks up the public IP (ipify, icanhazip, ifconfig.me) on its Network tab; `omarchy bar set crmne.omastats publicIp false` stops it |
 
-`plugins/bar.json` is the bar layout: the coding widgets on the left after the workspaces, OmaStats and the system
+`plugins/bar.json` is the bar layout: the coding widgets on the left after the workspaces, a single OmaStats readout and the system
 icons on the right. Without it every plugin lands on the right, which pushes the system icons past the screen edge on
 this laptop's 1200-point-wide bar.
 

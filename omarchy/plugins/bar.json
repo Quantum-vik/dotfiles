@@ -73,7 +73,9 @@
       },
       {
         "id": "crmne.omastats",
-        "style": "both"
+        "style": "text",
+        "modules": "cpu",
+        "barLabels": "icon"
       },
       {
         "id": "omarchy.bluetooth"
