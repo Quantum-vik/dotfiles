@@ -49,7 +49,7 @@ menu/      omarchy-menu.jsonc                      -> ~/.config/omarchy/extensio
 | Ctrl+←/→ switches workspace, Ctrl+Shift+←/→ moves the window, 4 workspaces | Same, stopping at 1 and 4. Super+1…9 still reach the others |
 | Super+L locks | Same. Omarchy's workspace layout toggle moves to **Super+Alt+L** |
 | Super+V opens CopyQ | Super+V opens Omarchy's clipboard history. CopyQ isn't installed. Omarchy's "universal paste" on Super+V is gone; Ctrl+V pastes |
-| Shift+Super+3/4/5 screenshots | **Print** (Omarchy's). Super+Shift+number moves windows between workspaces there |
+| Shift+Super+3/4/5 screenshots | **Print** (Omarchy's) or **Alt+Shift+4**, like Cmd+Shift+4 on the Mac. Super+Shift+number moves windows between workspaces there |
 | Fan toggle in Quick Settings | Omarchy menu → Setup → Fan (Auto / Cool / Quiet), same helper, no password |
 | Fingerprint also at the login screen | sudo, password dialogs and lock screen. The login screen asks for the password |
 | Charger notifications (poweralertd) | Same |

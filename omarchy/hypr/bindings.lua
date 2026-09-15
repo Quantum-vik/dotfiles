@@ -36,3 +36,7 @@ o.bind("SUPER + ALT + L", "Toggle workspace layout", "omarchy-hyprland-workspace
 -- Ctrl+V still pastes (Ctrl+Shift+V in terminals).
 hl.unbind("SUPER + V")
 o.bind("SUPER + V", "Clipboard manager", "omarchy-shell shell toggle omarchy.clipboard")
+
+-- Alt+Shift+4 takes a screenshot, like Cmd+Shift+4 on the Mac: the same smart region picker as Print.
+-- code:13 is the 4 key itself, as Omarchy's own Super+Shift+number bindings use, so Shift turning it into "$" can't matter.
+o.bind("ALT + SHIFT + code:13", "Screenshot", "omarchy-capture-screenshot")
