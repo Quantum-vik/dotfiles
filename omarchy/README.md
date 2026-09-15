@@ -18,7 +18,7 @@ Then reboot once: the login shell, the Docker group and poweralertd all start cl
 | `tools` | Postman, poweralertd 0.3.0 (pinned commit), Oh My Zsh + Powerlevel10k, tmux TPM; sets zsh as login shell, kitty as the terminal for Super+Return, Chrome as default browser; tells VS Code to use GNOME Keyring and stops Omarchy theme changes from replacing its color theme; lets Citrix trust Arch's root certificates; turns Cloudflare WARP on at every boot, with a fallback to the normal connection |
 | `desktop` | MesloLGS NF + Monocraft fonts |
 | `configs` | Symlinks shell, tmux and Claude Code configs, and the Omarchy kitty config; seeds git, ssh and espanso configs; Postman launcher; charger notifications |
-| `hyprland` | Links `hypr/input.lua`, `hypr/bindings.lua` and `hypr/looknfeel.lua` (blur on) over Omarchy's empty override files |
+| `hyprland` | Links `hypr/input.lua`, `hypr/bindings.lua` and `hypr/looknfeel.lua` (blur on, no gaps, cursor size 18) over Omarchy's empty override files; sets GTK's cursor size to match |
 | `plugins` | Installs the shell plugins in `plugins/plugins.txt` and applies the bar layout in `plugins/bar.json`; warns when a plugin's code is newer than the reviewed commit |
 | `fingerprint` | Runs Omarchy's fingerprint setup (sudo, password dialogs, lock screen). Its `libfprint-git` knows this laptop's reader, so nothing is built by hand |
 | `fan` | HP laptops only: the Ubuntu fan helper and polkit policy, switched from **Omarchy menu → Setup → Fan** |

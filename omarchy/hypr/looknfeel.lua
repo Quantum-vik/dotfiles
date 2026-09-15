@@ -12,6 +12,11 @@ hl.config({
   },
 })
 
+-- Smaller cursor. Omarchy's 24 draws about 38 px at this laptop's 1.6x scale; 18 draws about 29 px.
+-- Apps read these when they start. install.sh sets GTK's cursor-size to match.
+hl.env("XCURSOR_SIZE", "18")
+hl.env("HYPRCURSOR_SIZE", "18")
+
 -- No gaps between tiled windows or at the screen edges, as on the Mac (EnableTiledWindowMargins = 0).
 hl.config({
   general = {

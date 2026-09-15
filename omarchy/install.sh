@@ -239,12 +239,15 @@ step_configs() {
 
 # ---------------------------------------------------------------------------
 step_hyprland() {
-  log "Hyprland: keyboard, touchpad, GNOME-style shortcuts and blur (loaded after Omarchy's defaults)"
+  log "Hyprland: keyboard, touchpad, GNOME-style shortcuts, blur and cursor size (loaded after Omarchy's defaults)"
   link "$DOT/hypr/input.lua"     "$HOME/.config/hypr/input.lua"
   link "$DOT/hypr/bindings.lua"  "$HOME/.config/hypr/bindings.lua"
   link "$DOT/hypr/looknfeel.lua" "$HOME/.config/hypr/looknfeel.lua"
+  # GTK apps take the cursor size from gsettings, not XCURSOR_SIZE; keep it equal to looknfeel.lua.
+  gsettings set org.gnome.desktop.interface cursor-size 18 2>/dev/null && info "GTK cursor size 18"
   if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && have hyprctl; then
     hyprctl reload >/dev/null && info "Hyprland reloaded; a config error shows as a banner at the top of the screen"
+    hyprctl setcursor "$(gsettings get org.gnome.desktop.interface cursor-theme 2>/dev/null | tr -d "'")" 18 >/dev/null 2>&1 || true
   else
     info "takes effect at the next Hyprland login"
   fi
