@@ -22,7 +22,7 @@ huacnlee.which-key                https://github.com/huacnlee/omarchy-which-key.
 
 # VPN switcher, from a fork that adds Cloudflare WARP and a clickable setup hint (upstream PR:
 # https://github.com/jkoestinger/omarchy-vpn/pull/41). Move back to jkoestinger/omarchy-vpn once that is merged.
-jkoestinger.vpn                   https://github.com/Quantum-vik/omarchy-vpn.git                       ea4f5b0d7b33fe8201650cc45ac470b18ac8e010
+jkoestinger.vpn                   https://github.com/Quantum-vik/omarchy-vpn.git                       eff98d16cb7dce2829220af9fe2e286bcc4ff989
 
 # System monitor (its bundled sampler binary is attested by the repo's CI for this commit)
 crmne.omastats                    https://github.com/crmne/omastats.git                                5c6f91a9c0a74b14cc9a629429ef38eaa5b069c0
