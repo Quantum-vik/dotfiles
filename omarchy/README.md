@@ -16,15 +16,15 @@ Then reboot once: the login shell, the Docker group and poweralertd all start cl
 |---|---|
 | `packages` | `packages/pacman.txt` (Arch and Omarchy repositories), `packages/aur.txt` (Chrome, pgAdmin, espanso, Citrix Workspace), the Flathub apps from `../linux/packages/flatpak.txt`, and Docker without sudo through Omarchy's own prompt |
 | `tools` | Postman, poweralertd 0.3.0 (pinned commit), Oh My Zsh + Powerlevel10k, tmux TPM; sets zsh as login shell, kitty as the terminal for Super+Return, Chrome as default browser; tells VS Code to use GNOME Keyring; lets Citrix trust Arch's root certificates |
-| `desktop` | MesloLGS NF + Monocraft fonts, and kitty's Sonoma background image (checksum-pinned) |
-| `configs` | Symlinks shell, kitty, tmux and Claude Code configs; seeds git, ssh and espanso configs; Postman launcher; charger notifications |
-| `hyprland` | Links `hypr/input.lua` and `hypr/bindings.lua` over Omarchy's empty override files |
+| `desktop` | MesloLGS NF + Monocraft fonts |
+| `configs` | Symlinks shell, tmux and Claude Code configs, and the Omarchy kitty config; seeds git, ssh and espanso configs; Postman launcher; charger notifications |
+| `hyprland` | Links `hypr/input.lua`, `hypr/bindings.lua` and `hypr/looknfeel.lua` (blur on) over Omarchy's empty override files |
 | `fingerprint` | Runs Omarchy's fingerprint setup (sudo, password dialogs, lock screen). Its `libfprint-git` knows this laptop's reader, so nothing is built by hand |
 | `fan` | HP laptops only: the Ubuntu fan helper and polkit policy, switched from **Omarchy menu → Setup → Fan** |
 
 Every step is safe to re-run. A file that differs from the repo is moved to `<file>.bak-<timestamp>`.
 
-Shared with the Ubuntu setup, so a change in one place applies to both: `linux/shell/`, `linux/kitty/`, `tmux/`,
+Shared with the Ubuntu setup, so a change in one place applies to both: `linux/shell/`, `tmux/`,
 `claude/`, `linux/git/`, `linux/ssh/`, `linux/espanso/`, `linux/applications/`, `linux/power/`, `linux/fan/`.
 
 ## Layout
@@ -32,8 +32,9 @@ Shared with the Ubuntu setup, so a change in one place applies to both: `linux/s
 ```
 install.sh
 packages/  pacman.txt  aur.txt
-hypr/      input.lua  bindings.lua        -> ~/.config/hypr/ (loaded after Omarchy's defaults)
-menu/      omarchy-menu.jsonc             -> ~/.config/omarchy/extensions/ (Setup -> Fan)
+hypr/      input.lua  bindings.lua  looknfeel.lua  -> ~/.config/hypr/ (loaded after Omarchy's defaults)
+kitty/     kitty.conf                              -> ~/.config/kitty/ (follows the Omarchy theme)
+menu/      omarchy-menu.jsonc                      -> ~/.config/omarchy/extensions/ (Setup -> Fan)
 ```
 
 ## Differences from the Ubuntu desktop
@@ -52,7 +53,7 @@ menu/      omarchy-menu.jsonc             -> ~/.config/omarchy/extensions/ (Setu
 | tmux sessions come back after logout and reboot | Same. Omarchy's own `~/.config/tmux/tmux.conf` is moved aside, because tmux would load it on top of this repo's config |
 | Apps reopen after logout (Another Window Session Manager) | Nothing equivalent on Hyprland |
 | Dock, hot corners, Astra Monitor in the top bar | None. Apps: Super+Alt+Space. Activity: Super+Ctrl+T (btop) or Mission Center |
-| WhiteSur theme, Sonoma wallpapers | Omarchy's themes. kitty keeps its own colours and Sonoma background, so switching Omarchy's theme doesn't restyle kitty |
+| WhiteSur theme, Sonoma wallpapers | Omarchy's themes (Solitude by default). kitty follows them, with a see-through background over Hyprland's blur |
 | Docker group added directly | Omarchy's `omarchy-setup-security-sudoless-docker` explains the risk and asks first |
 
 zsh replaces Omarchy's bash, so Omarchy's bash aliases and starship prompt aren't used. `linux/shell/zshrc`

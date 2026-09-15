@@ -6,8 +6,9 @@
 #
 # Steps: packages  tools  desktop  configs  hyprland  fingerprint  fan
 #
-# App configs (shell, kitty, tmux, git, ssh, espanso, Claude Code, fan helper, poweralertd unit) are the same
-# files ../linux/install.sh uses, so both machines stay in sync. Omarchy keeps its own theme, bar and launcher.
+# App configs (shell, tmux, git, ssh, espanso, Claude Code, fan helper, poweralertd unit) are the same files
+# ../linux/install.sh uses, so both machines stay in sync. Omarchy keeps its own theme, bar and launcher, and kitty
+# gets its own config here (kitty/kitty.conf) so it follows that theme.
 # Safe to re-run: each step skips work that is already done, and any existing file that differs from the
 # repo is moved to <file>.bak-<timestamp>, never deleted.
 # This script contains no credentials. See README.md for what to restore by hand.
@@ -132,10 +133,6 @@ step_tools() {
 }
 
 # ---------------------------------------------------------------------------
-# The Sonoma wallpaper behind kitty's text, from a pinned WhiteSur-wallpapers commit (no checksums upstream).
-SONOMA_COMMIT=5c1d7ca20b8de0a7efe443792c19e49277262e02
-SONOMA_SHA256=3aed28864e835b7ec2707b7260134834f25afcc36efef90bfb7e157d2fd6adb4
-
 step_desktop() {
   local fonts="$HOME/.local/share/fonts"
 
@@ -154,23 +151,6 @@ step_desktop() {
     unzip -qjo "$TMP/mc.zip" '*.ttf' -d "$fonts/Monocraft"
   fi
   fc-cache -f
-
-  log "kitty background image (macOS Sonoma dark, cropped to 16:9)"
-  if [ -f "$HOME/.config/kitty/sonoma-dark.png" ]; then info "present"; else
-    curl -fsSL "https://raw.githubusercontent.com/vinceliuice/WhiteSur-wallpapers/$SONOMA_COMMIT/4k/Sonoma-dark.jpg" \
-      -o "$TMP/Sonoma-dark.jpg"
-    echo "$SONOMA_SHA256  $TMP/Sonoma-dark.jpg" | sha256sum -c -
-    mkdir -p "$HOME/.config/kitty"
-    SRC="$TMP/Sonoma-dark.jpg" python3 - <<'PY'
-import gi, os
-gi.require_version('GdkPixbuf', '2.0')
-from gi.repository import GdkPixbuf
-pb = GdkPixbuf.Pixbuf.new_from_file(os.environ["SRC"])
-w = pb.get_width()
-crop = pb.new_subpixbuf(0, int(pb.get_height() * 0.30), w, w * 9 // 16)
-crop.scale_simple(1920, 1080, GdkPixbuf.InterpType.HYPER).savev(os.path.expanduser("~/.config/kitty/sonoma-dark.png"), "png", [], [])
-PY
-  fi
 }
 
 # ---------------------------------------------------------------------------
@@ -184,7 +164,7 @@ step_configs() {
   else
     warn "Oh My Zsh not installed yet: run the 'tools' step, then 'configs' again for aliases.zsh"
   fi
-  link "$LNX/kitty/kitty.conf"   "$HOME/.config/kitty/kitty.conf"
+  link "$DOT/kitty/kitty.conf"   "$HOME/.config/kitty/kitty.conf"
   for f in settings.json keybindings.json statusline.sh; do link "$REPO/claude/$f" "$HOME/.claude/$f"; done
 
   log "tmux: this repo's config replaces Omarchy's"
@@ -230,9 +210,10 @@ step_configs() {
 
 # ---------------------------------------------------------------------------
 step_hyprland() {
-  log "Hyprland: keyboard, touchpad and GNOME-style shortcuts (loaded after Omarchy's defaults)"
+  log "Hyprland: keyboard, touchpad, GNOME-style shortcuts and blur (loaded after Omarchy's defaults)"
   link "$DOT/hypr/input.lua"     "$HOME/.config/hypr/input.lua"
   link "$DOT/hypr/bindings.lua"  "$HOME/.config/hypr/bindings.lua"
+  link "$DOT/hypr/looknfeel.lua" "$HOME/.config/hypr/looknfeel.lua"
   if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && have hyprctl; then
     hyprctl reload >/dev/null && info "Hyprland reloaded; a config error shows as a banner at the top of the screen"
   else
