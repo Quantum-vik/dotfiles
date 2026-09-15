@@ -11,15 +11,6 @@
         "id": "omarchy.workspaces"
       },
       {
-        "id": "huacnlee.which-key"
-      },
-      {
-        "id": "io.github.pjgeutjens.clockwork"
-      },
-      {
-        "id": "agx.screen-time"
-      },
-      {
         "id": "omarchy.agents"
       },
       {
@@ -61,15 +52,24 @@
         "id": "omarchy.weather"
       },
       {
-        "id": "omaplug"
-      },
-      {
         "id": "omarchy.system-update"
       }
     ],
     "right": [
       {
         "id": "omarchy.tray"
+      },
+      {
+        "id": "io.github.pjgeutjens.clockwork"
+      },
+      {
+        "id": "agx.screen-time"
+      },
+      {
+        "id": "huacnlee.which-key"
+      },
+      {
+        "id": "omaplug"
       },
       {
         "id": "crmne.omastats",
