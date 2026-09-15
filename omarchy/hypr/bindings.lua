@@ -28,9 +28,11 @@ o.bind("CTRL + SHIFT + LEFT", "Move window to the workspace on the left", worksp
 o.bind("CTRL + SHIFT + RIGHT", "Move window to the workspace on the right", workspace_step(1, true))
 
 -- Super+L locks, as on GNOME. Omarchy's workspace layout toggle moves from Super+L to Super+Alt+L.
-o.rebind("SUPER + L", "Lock system", "omarchy-system-lock")
+hl.unbind("SUPER + L")
+o.bind("SUPER + L", "Lock system", "omarchy-system-lock")
 o.bind("SUPER + ALT + L", "Toggle workspace layout", "omarchy-hyprland-workspace-layout-toggle")
 
 -- Super+V opens clipboard history, as CopyQ did on GNOME. Omarchy's "universal paste" on Super+V goes away;
 -- Ctrl+V still pastes (Ctrl+Shift+V in terminals).
-o.rebind("SUPER + V", "Clipboard manager", "omarchy-shell shell toggle omarchy.clipboard")
+hl.unbind("SUPER + V")
+o.bind("SUPER + V", "Clipboard manager", "omarchy-shell shell toggle omarchy.clipboard")
