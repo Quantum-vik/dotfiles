@@ -5,3 +5,5 @@ google-chrome
 pgadmin4-desktop
 espanso-wayland
 icaclient
+# Cloudflare's own .deb, repackaged. install.sh turns it on at boot; see README.md "Cloudflare WARP"
+cloudflare-warp-bin

@@ -130,6 +130,19 @@ step_tools() {
     done
     sudo /opt/Citrix/ICAClient/util/ctx_rehash /opt/Citrix/ICAClient/keystore/cacerts >/dev/null 2>&1 || true
   fi
+
+  log "Cloudflare WARP, on at every boot (the ISP's route to Fastly, which serves PyPI, GitHub and Flathub, is slow)"
+  if have warp-cli; then
+    sudo systemctl enable --now warp-svc.service
+    for _ in $(seq 1 15); do warp-cli --accept-tos status >/dev/null 2>&1 && break; sleep 1; done
+    warp-cli --accept-tos registration show 2>/dev/null | grep -q '^Device ID' \
+      || warp-cli --accept-tos registration new >/dev/null
+    warp-cli --accept-tos mode warp >/dev/null
+    warp-cli --accept-tos connect >/dev/null   # also sets Always On, so it reconnects after every reboot
+    info "$(warp-cli --accept-tos status | head -1)"
+  else
+    warn "WARP not installed yet: run the 'packages' step, then 'tools' again"
+  fi
 }
 
 # ---------------------------------------------------------------------------

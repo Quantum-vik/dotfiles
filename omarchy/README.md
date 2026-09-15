@@ -14,8 +14,8 @@ Then reboot once: the login shell, the Docker group and poweralertd all start cl
 
 | Step | What it does |
 |---|---|
-| `packages` | `packages/pacman.txt` (Arch and Omarchy repositories), `packages/aur.txt` (Chrome, pgAdmin, espanso, Citrix Workspace), the Flathub apps from `../linux/packages/flatpak.txt`, and Docker without sudo through Omarchy's own prompt |
-| `tools` | Postman, poweralertd 0.3.0 (pinned commit), Oh My Zsh + Powerlevel10k, tmux TPM; sets zsh as login shell, kitty as the terminal for Super+Return, Chrome as default browser; tells VS Code to use GNOME Keyring; lets Citrix trust Arch's root certificates |
+| `packages` | `packages/pacman.txt` (Arch and Omarchy repositories), `packages/aur.txt` (Chrome, pgAdmin, espanso, Citrix Workspace, Cloudflare WARP), the Flathub apps from `../linux/packages/flatpak.txt`, and Docker without sudo through Omarchy's own prompt |
+| `tools` | Postman, poweralertd 0.3.0 (pinned commit), Oh My Zsh + Powerlevel10k, tmux TPM; sets zsh as login shell, kitty as the terminal for Super+Return, Chrome as default browser; tells VS Code to use GNOME Keyring; lets Citrix trust Arch's root certificates; turns Cloudflare WARP on at every boot |
 | `desktop` | MesloLGS NF + Monocraft fonts |
 | `configs` | Symlinks shell, tmux and Claude Code configs, and the Omarchy kitty config; seeds git, ssh and espanso configs; Postman launcher; charger notifications |
 | `hyprland` | Links `hypr/input.lua`, `hypr/bindings.lua` and `hypr/looknfeel.lua` (blur on) over Omarchy's empty override files |
@@ -61,9 +61,20 @@ activates mise, which Omarchy uses to install `claude` and `gh`.
 
 ## AUR packages
 
-`packages/aur.txt` lists Chrome, pgAdmin, espanso and Citrix Workspace. On Ubuntu these come from signed vendor
+`packages/aur.txt` lists Chrome, pgAdmin, espanso, Citrix Workspace and Cloudflare WARP. On Ubuntu these come from signed vendor
 repositories or checksum-verified downloads. On Arch they come from AUR build scripts, which individual volunteers
 maintain and yay runs without showing them. Read one before the first install with `yay -Gp <name>`.
+
+## Cloudflare WARP
+
+On this machine's BSNL connection, downloads from Fastly (PyPI for uv and pip, GitHub, Flathub) crawled at about
+2 Mbit/s per connection, with 6–7% of packets arriving out of order, while Google and Cloudflare gave 130–200 Mbit/s.
+Speed tests looked fine because they open many connections at once. Through WARP, Cloudflare's free VPN, the same
+PyPI download ran at 70–116 Mbit/s with no reordering, so the `tools` step turns it on at every boot.
+
+All traffic then leaves through Cloudflare, and websites see a Cloudflare address. Local network devices stay outside
+the tunnel. `warp-cli disconnect` turns it off (for example if a work VPN or Citrix misbehaves); `warp-cli connect`
+turns it back on and keeps it on across reboots. On a connection without this problem, leave it off.
 
 ## Status
 
