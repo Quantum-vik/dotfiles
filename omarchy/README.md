@@ -15,7 +15,7 @@ Then reboot once: the login shell, the Docker group and poweralertd all start cl
 | Step | What it does |
 |---|---|
 | `packages` | `packages/pacman.txt` (Arch and Omarchy repositories), `packages/aur.txt` (Chrome, pgAdmin, espanso, Citrix Workspace, Cloudflare WARP), the Flathub apps from `../linux/packages/flatpak.txt`, and Docker without sudo through Omarchy's own prompt |
-| `tools` | Postman, poweralertd 0.3.0 (pinned commit), Oh My Zsh + Powerlevel10k, tmux TPM; sets zsh as login shell, kitty as the terminal for Super+Return, Chrome as default browser; tells VS Code to use GNOME Keyring; lets Citrix trust Arch's root certificates; turns Cloudflare WARP on at every boot, with a fallback to the normal connection |
+| `tools` | Postman, poweralertd 0.3.0 (pinned commit), Oh My Zsh + Powerlevel10k, tmux TPM; sets zsh as login shell, kitty as the terminal for Super+Return, Chrome as default browser; tells VS Code to use GNOME Keyring and stops Omarchy theme changes from replacing its color theme; lets Citrix trust Arch's root certificates; turns Cloudflare WARP on at every boot, with a fallback to the normal connection |
 | `desktop` | MesloLGS NF + Monocraft fonts |
 | `configs` | Symlinks shell, tmux and Claude Code configs, and the Omarchy kitty config; seeds git, ssh and espanso configs; Postman launcher; charger notifications |
 | `hyprland` | Links `hypr/input.lua`, `hypr/bindings.lua` and `hypr/looknfeel.lua` (blur on) over Omarchy's empty override files |

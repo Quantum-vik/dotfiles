@@ -122,6 +122,15 @@ step_tools() {
   else
     info "argv.json already sets password-store"
   fi
+  # Omarchy writes each theme's editor theme into VS Code's settings.json on every theme change, which replaced the
+  # Hyper theme Settings Sync brings from the Mac. This flag file is Omarchy's own opt-out.
+  if [ -e "$HOME/.local/state/omarchy/toggles/skip-vscode-theme-changes" ]; then
+    info "Omarchy already leaves the VS Code theme alone"
+  else
+    mkdir -p "$HOME/.local/state/omarchy/toggles"
+    touch "$HOME/.local/state/omarchy/toggles/skip-vscode-theme-changes"
+    info "Omarchy theme changes no longer touch the VS Code theme"
+  fi
 
   if [ -d /opt/Citrix/ICAClient/keystore/cacerts ]; then
     log "Citrix: trusting Arch's root certificates (prevents SSL error 61)"
