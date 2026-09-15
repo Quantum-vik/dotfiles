@@ -87,6 +87,7 @@ minute:
 | WARP on, pages load | Nothing |
 | WARP on, nothing loads through it, but the normal connection works | Switches WARP off, notifies, and tries WARP again every 5 minutes; switches back once it works |
 | Nothing loads with or without WARP | Leaves WARP on: the connection itself is down, so switching would only flap |
+| On the fallback, and another VPN (from the VPN bar widget, say) now carries the traffic | Ends the fallback and leaves WARP off, so two tunnels never share the routes |
 | WARP switched off by hand | Leaves it off. Only a fallback it started itself is undone |
 
 Run `warp-fallback` in a terminal to see what it decides, or `journalctl --user -u warp-fallback` for its history.
@@ -114,6 +115,7 @@ first, then move its commit in `plugins.txt`.
 | Screen Time | Per-app screen time | History stays local |
 | Omaplug | Browse, enable and remove plugins | Its Update buttons apply new code without showing it; update from a terminal |
 | Which Key | Shortcut guide while a modifier is held | Its keyboard hook refuses the symlinked `hypr/bindings.lua`, so the guide stays off |
+| VPN (fork) | Switch between Cloudflare WARP and Proton, Mullvad, Windscribe or NetworkManager VPNs | Installed from Quantum-vik/omarchy-vpn, which adds WARP; turning one VPN on turns the others off. Accept WARP's terms once (click the hint in its panel) |
 | OmaStats | One CPU readout in the bar; its dropdown has CPU, memory, disks, network, sensors and battery | Looks up the public IP (ipify, icanhazip, ifconfig.me) on its Network tab; `omarchy bar set crmne.omastats publicIp false` stops it |
 
 `plugins/bar.json` is the bar layout: the coding widgets on the left after the workspaces; Clockwork, Screen Time,

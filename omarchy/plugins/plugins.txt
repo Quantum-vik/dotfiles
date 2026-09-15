@@ -20,5 +20,9 @@ omaplug                           https://github.com/fross100/omaplug.git       
 # Which Key's guide can't install its keyboard hook while ~/.config/hypr/bindings.lua is a symlink into this repo
 huacnlee.which-key                https://github.com/huacnlee/omarchy-which-key.git                    74d89a00ba5503762ac20f1aba9d33a410986c63
 
+# VPN switcher, from a fork that adds Cloudflare WARP and a clickable setup hint (upstream PR:
+# https://github.com/jkoestinger/omarchy-vpn/pull/41). Move back to jkoestinger/omarchy-vpn once that is merged.
+jkoestinger.vpn                   https://github.com/Quantum-vik/omarchy-vpn.git                       ea4f5b0d7b33fe8201650cc45ac470b18ac8e010
+
 # System monitor (its bundled sampler binary is attested by the repo's CI for this commit)
 crmne.omastats                    https://github.com/crmne/omastats.git                                5c6f91a9c0a74b14cc9a629429ef38eaa5b069c0

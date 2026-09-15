@@ -1,6 +1,6 @@
 {
   "position": "top",
-  "transparent": false,
+  "transparent": true,
   "centerAnchor": "omarchy.clock",
   "layout": {
     "left": [
@@ -70,6 +70,9 @@
       },
       {
         "id": "omaplug"
+      },
+      {
+        "id": "jkoestinger.vpn"
       },
       {
         "id": "crmne.omastats",

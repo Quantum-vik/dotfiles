@@ -5,6 +5,7 @@
 #   WARP on, but nothing loads through it          -> switch WARP off (normal ISP connection) and notify
 #     ...and nothing loads without it either        -> the connection itself is down: turn WARP back on, change nothing
 #   on the fallback                                 -> try WARP again every 5 minutes, keep it once it works
+#     ...unless another VPN now carries the traffic -> the fallback ends and WARP stays off
 #   WARP switched off by hand (warp-cli disconnect) -> left alone; only a fallback started here is undone here
 set -uo pipefail
 PATH="$PATH:${OMARCHY_PATH:-/usr/share/omarchy}/bin"
@@ -12,7 +13,8 @@ PATH="$PATH:${OMARCHY_PATH:-/usr/share/omarchy}/bin"
 STATE="${XDG_STATE_HOME:-$HOME/.local/state}/warp-fallback"
 MARKER="$STATE/active"   # exists while this script has WARP off; holds the time of the last retry
 RETRY_SECONDS=300
-# The URLs are overridable so the fallback can be tested without breaking Cloudflare.
+# The URLs (and, for other_vpn, the route device and /sys/class/net) are overridable so the fallback can be tested
+# without breaking Cloudflare or bringing up a second VPN.
 TUNNEL_CHECK_URLS=${WARP_FALLBACK_TUNNEL_URLS:-"https://www.google.com/generate_204 http://detectportal.firefox.com/success.txt"}
 DIRECT_CHECK_URLS=${WARP_FALLBACK_DIRECT_URLS:-$TUNNEL_CHECK_URLS}
 
@@ -32,6 +34,17 @@ online() {
   return 1
 }
 
+# Prints the interface of a tunnel other than WARP that holds the route to the internet, if there is one.
+# `ip route get` follows policy rules, so it sees WireGuard/NetworkManager tunnels that route by fwmark too.
+# Tunnel devices (tun, WireGuard) are ARPHRD_NONE, type 65534; Wi-Fi, Ethernet and Docker bridges are 1.
+other_vpn() {
+  local dev
+  dev=${WARP_FALLBACK_ROUTE_DEV:-$(ip route get 1.1.1.1 2>/dev/null | sed -n 's/.* dev \([^ ]*\).*/\1/p' | head -1)}
+  [ -n "$dev" ] && [ "$dev" != CloudflareWARP ] \
+    && [ "$(cat "${WARP_FALLBACK_SYS_NET:-/sys/class/net}/$dev/type" 2>/dev/null)" = 65534 ] \
+    && echo "$dev"
+}
+
 wait_for() {  # wait_for <status> <seconds>
   for _ in $(seq "$2"); do [ "$(status)" = "$1" ] && return 0; sleep 1; done
   return 1
@@ -46,6 +59,13 @@ if [ -f "$MARKER" ]; then
     rm -f "$MARKER"            # WARP was turned back on by hand: check it like any other connection below
   else
     [ $(( $(date +%s) - $(cat "$MARKER") )) -ge $RETRY_SECONDS ] || exit 0
+    # Another VPN brought up since the fallback (from the VPN bar widget, say) now carries the traffic.
+    # Connecting WARP under it would put two tunnels on the same routes, so the fallback ends here.
+    if dev=$(other_vpn); then
+      rm -f "$MARKER"
+      echo "another VPN ($dev) carries the traffic; leaving WARP off"
+      exit 0
+    fi
     date +%s > "$MARKER"
     online "$DIRECT_CHECK_URLS" || { echo "offline; retrying WARP later"; exit 0; }
     warp connect
