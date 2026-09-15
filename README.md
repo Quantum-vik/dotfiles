@@ -47,6 +47,9 @@ done
 chmod +x ~/.claude/statusline.sh
 ```
 
+`settings.json` sets `attribution` to empty with `sessionUrl: false`, so commits and pull requests made through
+Claude Code carry no Co-Authored-By trailer, Claude-Session link or "Generated with Claude Code" footer.
+
 `statusline.sh` needs `jq`, `git` and `awk`. It renders model, a context-window
 progress bar, effort level, token in/out/total, session cost, cache-hit ratio
 (warns below 70%), git branch with a dirty flag, and plan rate-limit countdowns.

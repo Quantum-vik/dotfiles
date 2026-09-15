@@ -33,6 +33,8 @@
   "remoteControlAtStartup": true,
   "autoMemoryEnabled": true,
 
+  "attribution": { "commit": "", "pr": "", "sessionUrl": false },
+
   "statusLine": {
     "type": "command",
     "command": "~/.claude/statusline.sh",
