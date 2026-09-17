@@ -1,19 +1,10 @@
 {
-  "model": "opus[1m]",
-  "effortLevel": "xhigh",
-  "alwaysThinkingEnabled": true,
-  "autoCompactEnabled": false,
-
-  "theme": "dark-daltonized",
-  "tui": "fullscreen",
-  "editorMode": "normal",
-  "autoScrollEnabled": true,
-
-  "voice": { "enabled": true, "mode": "hold" },
-  "voiceEnabled": true,
-
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
   "permissions": {
-    "defaultMode": "auto",
     "allow": [
       "Bash(npm run *)",
       "Bash(git *)",
@@ -21,26 +12,10 @@
       "Read(.)",
       "Write(./src/**)",
       "Write(./tests/**)"
-    ]
+    ],
+    "defaultMode": "auto"
   },
-
-  "skipDangerousModePermissionPrompt": true,
-  "skipAutoPermissionPrompt": true,
-
-  "preferredNotifChannel": "terminal_bell",
-  "inputNeededNotifEnabled": true,
-  "agentPushNotifEnabled": true,
-  "remoteControlAtStartup": true,
-  "autoMemoryEnabled": true,
-
-  "attribution": { "commit": "", "pr": "", "sessionUrl": false },
-
-  "statusLine": {
-    "type": "command",
-    "command": "~/.claude/statusline.sh",
-    "refreshInterval": 1
-  },
-
+  "model": "opus[1m]",
   "hooks": {
     "Notification": [
       {
@@ -64,5 +39,32 @@
         ]
       }
     ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh",
+    "refreshInterval": 1
+  },
+  "alwaysThinkingEnabled": true,
+  "effortLevel": "xhigh",
+  "tui": "fullscreen",
+  "voice": {
+    "enabled": true,
+    "mode": "hold"
+  },
+  "autoMemoryEnabled": true,
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "dark-daltonized",
+  "editorMode": "normal",
+  "preferredNotifChannel": "terminal_bell",
+  "autoCompactEnabled": false,
+  "autoScrollEnabled": true,
+  "remoteControlAtStartup": true,
+  "inputNeededNotifEnabled": true,
+  "agentPushNotifEnabled": true,
+  "skipAutoPermissionPrompt": true,
+  "voiceEnabled": true,
+  "enabledPlugins": {
+    "mattpocock-skills@claude-plugins-official": true
   }
 }
