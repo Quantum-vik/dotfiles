@@ -14,7 +14,7 @@ Then reboot once: the login shell, the Docker group and poweralertd all start cl
 
 | Step | What it does |
 |---|---|
-| `packages` | `packages/pacman.txt` (Arch and Omarchy repositories), `packages/aur.txt` (Chrome, pgAdmin, espanso, Citrix Workspace, Cloudflare WARP), the Flathub apps from `../linux/packages/flatpak.txt`, and Docker without sudo through Omarchy's own prompt |
+| `packages` | `packages/pacman.txt` (Arch and Omarchy repositories), `packages/aur.txt` (Chrome, pgAdmin, espanso, Citrix Workspace, Cloudflare WARP, hyprmoncfg), the Flathub apps from `../linux/packages/flatpak.txt`, and Docker without sudo through Omarchy's own prompt |
 | `tools` | Postman, poweralertd 0.3.0 (pinned commit), Oh My Zsh + Powerlevel10k, tmux TPM; sets zsh as login shell, kitty as the terminal for Super+Return, Chrome as default browser; tells VS Code to use GNOME Keyring and stops Omarchy theme changes from replacing its color theme; lets Citrix trust Arch's root certificates; turns Cloudflare WARP on at every boot, with a fallback to the normal connection |
 | `desktop` | MesloLGS NF + Monocraft fonts |
 | `configs` | Symlinks shell, tmux and Claude Code configs, and the Omarchy kitty config; seeds git, ssh and espanso configs; Postman launcher; charger notifications |
@@ -64,7 +64,7 @@ activates mise, which Omarchy uses to install `claude` and `gh`.
 
 ## AUR packages
 
-`packages/aur.txt` lists Chrome, pgAdmin, espanso, Citrix Workspace and Cloudflare WARP. On Ubuntu these come from signed vendor
+`packages/aur.txt` lists Chrome, pgAdmin, espanso, Citrix Workspace, Cloudflare WARP and hyprmoncfg. On Ubuntu these come from signed vendor
 repositories or checksum-verified downloads. On Arch they come from AUR build scripts, which individual volunteers
 maintain and yay runs without showing them. Read one before the first install with `yay -Gp <name>`.
 
@@ -117,9 +117,10 @@ first, then move its commit in `plugins.txt`.
 | Which Key | Shortcut guide while a modifier is held | Its keyboard hook refuses the symlinked `hypr/bindings.lua`, so the guide stays off |
 | VPN (fork) | Switch between Cloudflare WARP and Proton, Mullvad, Windscribe or NetworkManager VPNs | Installed from Quantum-vik/omarchy-vpn, which adds WARP; turning one VPN on turns the others off. Accept WARP's terms once (click the hint in its panel) |
 | OmaStats | One CPU readout in the bar; its dropdown has CPU, memory, disks, network, sensors and battery | Looks up the public IP (ipify, icanhazip, ifconfig.me) on its Network tab; `omarchy bar set crmne.omastats publicIp false` stops it |
+| hyprmoncfg | Monitor layout profiles, matched by make, model and serial, that apply themselves on hotplug, lid close and wake; per-display brightness; a workspace planner | Needs its daemon `hyprmoncfgd` (packages/aur.txt). The daemon switches off Omarchy's monitor watcher (clamshell mode, lost-display recovery) as soon as it runs, and with no saved profile handles neither, so install.sh starts it only once a profile exists. Managing monitors adds an include line to `~/.config/hypr/hyprland.lua` and a marked block to `monitors.lua`; `hyprmoncfg unmanage` hands monitors back to Omarchy. If its workspace planner is used, keep the 1–4 / 5–8 split that `hypr/bindings.lua` steps through |
 
 `plugins/bar.json` is the bar layout: the coding widgets on the left after the workspaces; Clockwork, Screen Time,
-Which Key, Omaplug, a single OmaStats readout and the system icons on the right. Without it every plugin lands on the right, which pushes the system icons past the screen edge on
+Which Key, Omaplug, a single OmaStats readout, the system icons and hyprmoncfg beside the display icon on the right. Without it every plugin lands on the right, which pushes the system icons past the screen edge on
 this laptop's 1200-point-wide bar.
 
 ## Status

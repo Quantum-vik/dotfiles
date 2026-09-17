@@ -7,3 +7,6 @@ espanso-wayland
 icaclient
 # Cloudflare's own .deb, repackaged. install.sh turns it on at boot; see README.md "Cloudflare WARP"
 cloudflare-warp-bin
+# Daemon behind the hyprmoncfg bar widget (plugins/plugins.txt). The -bin build is the release GitHub Actions built from
+# the tagged source; `hyprmoncfg` compiles the same code here instead. install.sh starts it only once a profile exists
+hyprmoncfg-bin

@@ -26,3 +26,6 @@ jkoestinger.vpn                   https://github.com/Quantum-vik/omarchy-vpn.git
 
 # System monitor (its bundled sampler binary is attested by the repo's CI for this commit)
 crmne.omastats                    https://github.com/crmne/omastats.git                                5c6f91a9c0a74b14cc9a629429ef38eaa5b069c0
+
+# Monitor layout profiles, a front end for the hyprmoncfgd daemon from packages/aur.txt
+crmne.hyprmoncfg                  https://github.com/crmne/omarchy-hyprmoncfg.git                      dc3b5e726d82af1f1af668d2f3eb2d2778a9cc0d

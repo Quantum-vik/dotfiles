@@ -273,6 +273,17 @@ step_plugins() {
       || warn "$id is at ${head:0:7}, not the reviewed ${commit:0:7}; read: git -C ${dir/#$HOME/\~}/$id log -p ${commit:0:7}..HEAD"
   done < <(list "$DOT/plugins/plugins.txt")
 
+  # hyprmoncfgd (packages/aur.txt) switches off Omarchy's monitor watcher, which handles clamshell mode and lost
+  # displays, as soon as it starts, even with no profile to apply in its place. So it starts only once one is saved.
+  if have hyprmoncfgd; then
+    if compgen -G "$HOME/.config/hyprmoncfg/profiles/*" >/dev/null; then
+      systemctl --user enable --now hyprmoncfgd.service >/dev/null 2>&1 && info "hyprmoncfgd running" \
+        || warn "could not start hyprmoncfgd.service"
+    else
+      info "hyprmoncfgd off: save a monitor profile with 'hyprmoncfg', then: systemctl --user enable --now hyprmoncfgd"
+    fi
+  fi
+
   log "bar layout (plugins/bar.json), so the plugin widgets fit beside the clock"
   if [ -f "$shell" ] && jq -e --slurpfile bar "$DOT/plugins/bar.json" '.bar == $bar[0]' "$shell" >/dev/null; then
     info "ok       bar layout"; return
