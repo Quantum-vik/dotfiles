@@ -2,18 +2,62 @@
 -- Brings over the Ubuntu machine's GNOME shortcuts where they don't clash with Omarchy's core bindings.
 -- See every binding with Super+K.
 
--- Ctrl+Left/Right switches workspace and Ctrl+Shift+Left/Right takes the window along, stopping at 1 and 4
--- like GNOME's four fixed workspaces (and macOS Spaces). Chosen on purpose: it takes over word-jump in every app.
-local WORKSPACES = 4
+-- Ctrl+Left/Right switches workspace and Ctrl+Shift+Left/Right takes the window along, four to a
+-- screen like GNOME's fixed workspaces (and macOS Spaces). Chosen on purpose: it takes over word-jump in every app.
+--
+-- Hyprland numbers workspaces across the whole desktop rather than per screen, so each monitor
+-- owns a band of four by position: the leftmost gets 1-4, the one to its right 5-8. Stepping
+-- stays inside the band of the screen holding focus, so it never jumps to the other screen.
+-- Omarchy's Super+1..0 still address workspaces by number, wherever they are.
+local WORKSPACES_PER_MONITOR = 4
+
+local function monitor_band(monitor)
+  local monitors = hl.get_monitors()
+  table.sort(monitors, function(a, b)
+    if a.x == b.x then
+      return a.y < b.y
+    end
+    return a.x < b.x
+  end)
+
+  for index, candidate in ipairs(monitors) do
+    if candidate.name == monitor.name then
+      local first = (index - 1) * WORKSPACES_PER_MONITOR + 1
+      return first, first + WORKSPACES_PER_MONITOR - 1
+    end
+  end
+
+  return 1, WORKSPACES_PER_MONITOR
+end
 
 local function workspace_step(delta, take_window)
   return function()
+    local monitor = hl.get_active_monitor()
+    if not monitor then
+      return
+    end
+
+    local first, last = monitor_band(monitor)
     local active = hl.get_active_workspace()
-    local current = (active and active.id and active.id > 0) and active.id or 1
-    local target = math.max(1, math.min(WORKSPACES, current + delta))
+    local current = (active and active.id and active.id > 0) and active.id or first
+
+    -- Super+N can park another screen's workspace on this one. From there the first step
+    -- lands on the nearest workspace of this screen's own band rather than stepping blind.
+    local target = math.max(first, math.min(last, current + delta))
+    if current < first or current > last then
+      target = math.max(first, math.min(last, current))
+    end
     if target == current then
       return
     end
+
+    -- A workspace of this band left open on the other screen would take focus over there
+    -- instead of switching this screen, so bring it back before the switch.
+    local workspace = hl.get_workspace(tostring(target))
+    if workspace and workspace.monitor and workspace.monitor.name ~= monitor.name then
+      hl.dispatch(hl.dsp.workspace.move({ workspace = tostring(target), monitor = monitor.name }))
+    end
+
     if take_window then
       hl.dispatch(hl.dsp.window.move({ workspace = tostring(target) }))
     else

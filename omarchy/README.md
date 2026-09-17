@@ -46,7 +46,7 @@ menu/      omarchy-menu.jsonc                      -> ~/.config/omarchy/extensio
 |---|---|
 | US + India layouts, switched with Super+Space | Same layouts, switched with **Left Alt + Right Alt** (Super+Space is Omarchy's menu) |
 | 225 ms key repeat, natural scrolling and tap-to-click on the touchpad, traditional mouse wheel | Same |
-| Ctrl+←/→ switches workspace, Ctrl+Shift+←/→ moves the window, 4 workspaces | Same, stopping at 1 and 4. Super+1…9 still reach the others |
+| Ctrl+←/→ switches workspace, Ctrl+Shift+←/→ moves the window, 4 workspaces | Same, four to a screen. Hyprland numbers workspaces across the whole desktop, so each monitor owns a band by position: leftmost 1–4, next 5–8. Stepping stays on the screen holding focus and pulls its own workspace back if that workspace is showing elsewhere. Super+1…9 still reach any of them |
 | Super+L locks | Same. Omarchy's workspace layout toggle moves to **Super+Alt+L** |
 | Super+V opens CopyQ | Super+V opens Omarchy's clipboard history. CopyQ isn't installed. Omarchy's "universal paste" on Super+V is gone; Ctrl+V pastes |
 | Shift+Super+3/4/5 screenshots | **Print** (Omarchy's) or **Alt+Shift+4**, like Cmd+Shift+4 on the Mac. Super+Shift+number moves windows between workspaces there |
