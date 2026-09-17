@@ -23,3 +23,13 @@ alias clear='command clear && printf "\033[3J"'
 # tmux attach helpers
 alias tma="tmux attach"      # reattach to last session
 alias tml="tmux ls"          # list sessions
+
+# Clickable file paths. A terminal can only open text a program marked as a link (OSC 8), so ask the tools that
+# can. In kitty, Ctrl+click then opens the file in VS Code, at the line for ripgrep's hits: kitty/open-actions.conf
+# routes it. Both flags only take effect when writing to a terminal, so piped and redirected output stays plain.
+alias ls='ls --color=auto --hyperlink=auto'
+if [[ -n $KITTY_WINDOW_ID || $TERM == xterm-kitty || $TERM_PROGRAM == kitty ]]; then
+  alias rg='rg --hyperlink-format=kitty'     # file://host/path#line, the line kitty passes to `code --goto`
+else
+  alias rg='rg --hyperlink-format=default'   # plain file://host/path elsewhere (GNOME Terminal, VS Code)
+fi

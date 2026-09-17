@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+# Opens whatever was under the cursor when Ctrl+clicked in kitty. Linked from
+# ~/dotfiles/omarchy/kitty/kitty-open-clicked-word; bound in kitty/kitty.conf, which selects the word first.
+#
+# Why a script at all: a terminal can only open text a program marked as a link (OSC 8), and most tools mark
+# nothing. Claude Code prints `omarchy/README.md` and `#41` as plain characters, so kitty has nothing to open.
+# This reads the word kitty just selected and decides what it is.
+#
+#   https://…, file://…, mailto:…   the browser, through xdg-open
+#   #41                             that issue or PR on GitHub, through gh
+#   path, path:line, path:line:col  VS Code, at the line
+#   a directory                     VS Code, as a folder
+#
+# Finding which directory a relative path belongs to is the hard part: an agent prints paths relative to the
+# repository it was started in, and the terminal is told none of that -- inside tmux, kitty sees only the tmux
+# client. So this tries, in order, the terminal's directory, the directory of the pane last used, the git root
+# of either, and finally every git repository under $HOME, most recently touched first.
+# Anything it cannot place is left alone: a stray click does nothing rather than opening something random.
+#
+# Set KITTY_OPEN_CLICKED_WORD_LOG=1 to trace decisions into $XDG_RUNTIME_DIR/kitty-open-clicked-word.log.
+
+set -uo pipefail
+
+log=${XDG_RUNTIME_DIR:-/tmp}/kitty-open-clicked-word.log
+note() { [ -n "${KITTY_OPEN_CLICKED_WORD_LOG:-}" ] && printf '%s %s\n' "$(date +%H:%M:%S.%3N)" "$*" >>"$log"; }
+note "click: listen=${KITTY_LISTEN_ON:-unset} cwd=$PWD args=$*"
+
+# Git repositories under $HOME, most recently touched first, which is usually the one being worked in.
+recent_repos() {
+  find "$HOME" -mindepth 1 -maxdepth 4 \( -name '.*' -a ! -name '.git' \) -prune -o \
+    -name '.git' -maxdepth 4 -printf '%T@ %h\n' 2>/dev/null | sort -rn | cut -d' ' -f2-
+}
+
+# kitty passes no arguments; one may be given by hand to try what a word would do.
+if [ $# -gt 0 ]; then
+  word=$1
+else
+  # kitty finalises the selection as the button comes up, so the first read can still come back empty.
+  for _ in 1 2 3 4 5 6; do
+    word=$(kitty @ get-text --extent=selection 2>/dev/null | tr '\n' ' ')
+    case "$word" in
+      *[!$' \t']*) break ;;
+    esac
+    sleep 0.05
+  done
+fi
+note "selection: [${word:-}]"
+word=${word%% *}
+[ -n "$word" ] || { note "nothing selected"; exit 0; }
+
+# Punctuation the selection may have picked up around the word: quotes, brackets, and trailing sentence marks.
+while [[ $word == [\`\'\"\(\[\<\{]* ]]; do word=${word:1}; done
+while [[ $word == *[\`\'\"\)\]\>\}\,\;\.] ]]; do word=${word%?}; done
+[ -n "$word" ] || exit 0
+
+case "$word" in
+  http://*|https://*|file://*|mailto:*|ssh://*) note "url -> xdg-open"; exec xdg-open "$word" ;;
+esac
+
+# Candidate directories, nearest first. With tmux in the way, ask the client used most recently rather than
+# whichever pane happens to be active in some other window.
+dirs=("$PWD")
+if command -v tmux >/dev/null 2>&1; then
+  client=$(tmux list-clients -F '#{client_activity} #{client_tty}' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
+  if [ -n "$client" ]; then
+    pane=$(tmux display -p -c "$client" '#{pane_current_path}' 2>/dev/null)
+  else
+    pane=$(tmux display -p '#{pane_current_path}' 2>/dev/null)
+  fi
+  [ -n "${pane:-}" ] && dirs+=("$pane")
+fi
+for d in "${dirs[@]}"; do
+  root=$(git -C "$d" rev-parse --show-toplevel 2>/dev/null) && dirs+=("$root")
+done
+
+if [[ $word =~ ^#([0-9]+)$ ]]; then
+  number=${BASH_REMATCH[1]}
+  for d in "${dirs[@]}"; do
+    git -C "$d" rev-parse --git-dir >/dev/null 2>&1 || continue
+    note "#$number in $d"
+    cd "$d" && exec gh browse "$number"
+  done
+  # Nothing around the pane is a repository, so fall back to the one worked in most recently -- and say which,
+  # because opening the wrong project's issue tracker without a word would be worse than a notification.
+  repo=$(recent_repos | head -1)
+  if [ -n "$repo" ]; then
+    note "#$number -> most recent repo $repo"
+    command -v omarchy-notification-send >/dev/null 2>&1 &&
+      omarchy-notification-send -u low "Opening #$number in $(basename "$repo")"
+    cd "$repo" && exec gh browse "$number"
+  fi
+  note "#$number: no repository to ask"
+  exit 0
+fi
+
+path=$word
+line=""
+if [[ $word =~ ^(.+):([0-9]+)(:[0-9]+)?$ ]]; then
+  path=${BASH_REMATCH[1]}
+  line=${BASH_REMATCH[2]}
+fi
+[[ $path == '~'* ]] && path=$HOME${path#\~}
+
+target=""
+if [[ $path == /* ]] && [ -e "$path" ]; then
+  target=$path
+else
+  for d in "${dirs[@]}"; do
+    if [ -e "$d/$path" ]; then target=$d/$path; break; fi
+  done
+fi
+# Only a path with a directory in it is worth hunting for across repositories: a bare file name such as
+# README.md matches in too many places to guess from.
+if [ -z "$target" ] && [[ $path == */* ]]; then
+  while IFS= read -r repo; do
+    if [ -e "$repo/$path" ]; then target=$repo/$path; note "found in repo $repo"; break; fi
+  done < <(recent_repos)
+fi
+[ -n "$target" ] || { note "no file called [$path] under: ${dirs[*]} or any repo in $HOME"; exit 0; }
+
+if [ -d "$target" ]; then
+  note "dir -> code $target"
+  exec code "$target"
+fi
+note "file -> code --goto $target${line:+:$line}"
+exec code --goto "$target${line:+:$line}"

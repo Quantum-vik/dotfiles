@@ -194,6 +194,8 @@ step_configs() {
     warn "Oh My Zsh not installed yet: run the 'tools' step, then 'configs' again for aliases.zsh"
   fi
   link "$DOT/kitty/kitty.conf"   "$HOME/.config/kitty/kitty.conf"
+  link "$DOT/kitty/open-actions.conf" "$HOME/.config/kitty/open-actions.conf"
+  link "$DOT/kitty/kitty-open-clicked-word" "$HOME/.local/bin/kitty-open-clicked-word"
   for f in settings.json keybindings.json statusline.sh; do link "$REPO/claude/$f" "$HOME/.claude/$f"; done
 
   log "tmux: this repo's config replaces Omarchy's"

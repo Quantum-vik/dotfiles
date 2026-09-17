@@ -34,7 +34,8 @@ Shared with the Ubuntu setup, so a change in one place applies to both: `linux/s
 install.sh
 packages/  pacman.txt  aur.txt
 hypr/      input.lua  bindings.lua  looknfeel.lua  -> ~/.config/hypr/ (loaded after Omarchy's defaults)
-kitty/     kitty.conf                              -> ~/.config/kitty/ (follows the Omarchy theme)
+kitty/     kitty.conf  open-actions.conf           -> ~/.config/kitty/ (theme, and where Ctrl+click sends things)
+           kitty-open-clicked-word                 -> ~/.local/bin/ (what Ctrl+click runs)
 warp/      warp-fallback  .service  .timer         -> ~/.local/bin, ~/.config/systemd/user/ (WARP fallback)
 plugins/   plugins.txt  bar.json                   -> ~/.config/omarchy/plugins/, the bar in ~/.config/omarchy/shell.json
 menu/      omarchy-menu.jsonc                      -> ~/.config/omarchy/extensions/ (Setup -> Fan)
@@ -91,6 +92,43 @@ minute:
 | WARP switched off by hand | Leaves it off. Only a fallback it started itself is undone |
 
 Run `warp-fallback` in a terminal to see what it decides, or `journalctl --user -u warp-fallback` for its history.
+
+## Clicking things in the terminal
+
+Ctrl+click opens whatever is under the cursor, in the program that suits it:
+
+| Under the cursor | Opens |
+|---|---|
+| `omarchy/README.md`, `hypr/bindings.lua:12` | VS Code, at the line |
+| A directory | VS Code, as a folder |
+| `#41` | That issue or PR on GitHub, through `gh browse` |
+| `https://…` | Chrome |
+
+A terminal only receives characters, so a path is not a link unless the program marked it as one (an OSC 8
+hyperlink), and Claude Code marks nothing: the hyperlinks it used to emit for file paths have been missing since
+v2.1.216 (anthropics/claude-code#79839), and `#41` was never a link (#89084). So the click does not wait to be
+handed a link. `kitty/kitty.conf` maps it to select the word under the cursor and pass it to
+`kitty/kitty-open-clicked-word`, which works out what the word is. Three things that cost an afternoon:
+
+- Both halves have to ride on the **press**. A mapping on the release never fires, because kitty keeps the
+  release of a selection to itself.
+- The mapping needs `--allow-remote-control`, or the script gets no socket to read the selection back through,
+  Omarchy's `allow_remote_control socket-only` notwithstanding, and `grabbed`, or Claude Code and nvim swallow it.
+- `:` had to join `path:line` into one word, through `select_by_word_characters`, or the line number was lost.
+
+Finding what a relative path is relative to is the real work, since inside tmux kitty sees only the tmux client:
+the script tries the terminal's directory, the directory of the pane last used, the git root of either, then
+every git repository under `$HOME`, most recently touched first. A `#41` with no repository around the pane
+falls back the same way and sends a notification naming the repository it chose. A word it cannot place is left
+alone rather than opening something random. `KITTY_OPEN_CLICKED_WORD_LOG=1` traces the decisions.
+
+Links that programs *do* mark are still handled by kitty itself on Ctrl+Shift+click, routed by
+`kitty/open-actions.conf` to the same places. `linux/shell/aliases.zsh` asks the tools that can mark them to do
+so (`ls --hyperlink=auto`, `rg --hyperlink-format=kitty`, which carries the line number), and `tmux/tmux.conf`
+tells tmux to pass them through, which it otherwise drops (for clients that attach after it).
+
+Keyboard pickers cover the same ground without the mouse. Each labels every match on screen; press the letter:
+Ctrl+Shift+F for a file path into VS Code, Ctrl+Shift+I for a `#41`, Ctrl+Shift+E for a URL (kitty's own).
 
 ## Shell plugins
 
