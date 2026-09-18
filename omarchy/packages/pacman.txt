@@ -21,6 +21,9 @@ python-pipx
 wget
 # VS Code, from Omarchy's repository
 visual-studio-code-bin
+# Claude's official Linux desktop app (chat, Cowork and Claude Code in a window), from Omarchy's repository.
+# The `claude` CLI itself comes from mise, not from here.
+claude-desktop
 
 # Build tools for poweralertd
 meson
