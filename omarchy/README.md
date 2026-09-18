@@ -39,6 +39,7 @@ kitty/     kitty.conf  open-actions.conf           -> ~/.config/kitty/ (theme, a
 warp/      warp-fallback  .service  .timer         -> ~/.local/bin, ~/.config/systemd/user/ (WARP fallback)
 plugins/   plugins.txt  bar.json                   -> ~/.config/omarchy/plugins/, the bar in ~/.config/omarchy/shell.json
 voxtype/   config.toml                             -> ~/.config/voxtype/ (dictation; seeded, not linked)
+backgrounds/ <theme>.txt                          -> ~/.config/omarchy/backgrounds/<theme>/ (fetched, see below)
 menu/      omarchy-menu.jsonc                      -> ~/.config/omarchy/extensions/ (Setup -> Fan)
 ```
 
@@ -164,6 +165,25 @@ old one as `config.toml.bak`), which would clobber a symlink. After changing set
 Punctuation is not spoken — saying "comma" types the word — but whisper punctuates from the phrasing. The `.en`
 model is English-only; Hindi or mixed speech needs a multilingual model (`base`, `small`, `large-v3-turbo`) and
 `language = "auto"`.
+
+## Wallpapers
+
+`backgrounds/<theme>.txt` lists a wallpaper per line as `filename url [op]`, and the `backgrounds` step of
+`install.sh` fetches each into `~/.config/omarchy/backgrounds/<theme>/` — the folder Omarchy treats as your own
+backgrounds for that theme, cycled together with the theme's own by `omarchy-theme-bg-next`. Set one directly with
+`omarchy-theme-bg-set <path>`.
+
+**The images are not in this repo.** They are fan art belonging to their artists and this repo is public, so
+only the URLs are tracked; the 31 MB of pictures would also dwarf the rest of it. `op` covers the two edits worth
+reproducing: `resize:WxH` for a file bigger than any screen here, and `cropbottom:N`, which cuts a stock-site
+watermark off the bottom and scales back to full height rather than stretching the picture.
+
+Two things learned the hard way, both worth knowing before editing a wallpaper in place:
+
+- The shell caches a background **by path**. Overwrite a file with new content under the same name and the screen
+  does not change; give the new version a new filename.
+- A 7680x4320 wallpaper costs quickshell roughly 120 MB of memory per screen, on two 1080p panels that gain
+  nothing from it. Hence the `resize:1920x1080` copy that the machine actually uses.
 
 ## Shell plugins
 

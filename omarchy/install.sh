@@ -354,15 +354,51 @@ step_dictation() {
 }
 
 # ---------------------------------------------------------------------------
+# Wallpapers, per theme, from backgrounds/<theme>.txt. Omarchy reads ~/.config/omarchy/backgrounds/<theme> as the
+# user's own background folder for that theme, alongside the ones the theme ships, and cycles all of them with
+# omarchy-theme-bg-next. The images are fan art belonging to their artists and this repo is public, so the
+# manifest holds URLs and this fetches them; see backgrounds/solitude.txt for the format.
+step_backgrounds() {
+  have magick || { info "ImageMagick missing; skipping backgrounds"; return; }
+  local manifest theme dir name url op dest
+  for manifest in "$DOT"/backgrounds/*.txt; do
+    [ -e "$manifest" ] || continue
+    theme="$(basename "$manifest" .txt)"
+    dir="$HOME/.config/omarchy/backgrounds/$theme"
+    log "backgrounds for the $theme theme -> ${dir/#$HOME/\~}"
+    mkdir -p "$dir"
+    while read -r name url op; do
+      [ -n "$name" ] || continue
+      case "$name" in \#*) continue ;; esac
+      dest="$dir/$name"
+      if [ -s "$dest" ]; then info "present  $name"; continue; fi
+      if ! curl -fsSL --retry 2 -A "omarchy-dotfiles/1.0" "$url" -o "$TMP/bg"; then
+        warn "could not download $name from $url"; continue
+      fi
+      case "$op" in
+        resize:*) magick "$TMP/bg" -resize "${op#resize:}" -quality 92 "$dest" ;;
+        # Cut the stock-site watermark off the bottom, then scale back to full height rather than stretching:
+        # the picture loses a sliver from each side instead of changing shape.
+        cropbottom:*) magick "$TMP/bg" -gravity north -crop "x$(( $(magick identify -format %h "$TMP/bg") - ${op#cropbottom:} ))+0+0" \
+                        +repage -resize x1080 -gravity center -extent 1920x1080 -quality 92 "$dest" ;;
+        *) cp "$TMP/bg" "$dest" ;;
+      esac
+      info "fetched  $name"
+    done < "$manifest"
+  done
+  info "switch backgrounds with omarchy-theme-bg-next, or omarchy-theme-bg-set <path>"
+}
+
+# ---------------------------------------------------------------------------
 main() {
   [ "$(id -u)" -ne 0 ] || { echo "Run as your normal user; the script calls sudo where it needs to."; exit 1; }
   have omarchy-pkg-add || { echo "This installer is for Omarchy. On Ubuntu use ../linux/install.sh."; exit 1; }
   local steps=("$@")
-  [ ${#steps[@]} -gt 0 ] || steps=(packages tools desktop configs hyprland plugins fingerprint fan dictation)
+  [ ${#steps[@]} -gt 0 ] || steps=(packages tools desktop configs hyprland plugins fingerprint fan dictation backgrounds)
   for s in "${steps[@]}"; do
     case "$s" in
-      packages|tools|desktop|configs|hyprland|plugins|fingerprint|fan|dictation) "step_$s" ;;
-      *) echo "Unknown step '$s'. Steps: packages tools desktop configs hyprland plugins fingerprint fan dictation"; exit 1 ;;
+      packages|tools|desktop|configs|hyprland|plugins|fingerprint|fan|dictation|backgrounds) "step_$s" ;;
+      *) echo "Unknown step '$s'. Steps: packages tools desktop configs hyprland plugins fingerprint fan dictation backgrounds"; exit 1 ;;
     esac
   done
   log "done: ${steps[*]}"

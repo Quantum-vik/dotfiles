@@ -1,0 +1,27 @@
+# Backgrounds for the `solitude` theme, fetched into ~/.config/omarchy/backgrounds/solitude by the
+# `backgrounds` step of install.sh. The images themselves are not in this repo: they are fan art belonging to
+# their artists, and this repo is public. One per line:
+#
+#   <filename>  <url>  [op]
+#
+# op is optional post-processing, applied with ImageMagick after download:
+#   resize:WxH        scale to fit, for a file that is larger than any screen here
+#   cropbottom:N      cut N pixels off the bottom, then rescale to 1920x1080 keeping the aspect ratio
+#                     (used to remove a stock-site watermark)
+#
+# Sources are wallhaven.cc, queried with atleast=1920x1080 and ratios=16x9 so nothing is upscaled.
+
+# One Piece: the Straw Hats' Jolly Roger
+jolly-roger-glow-clean-1920x1080.jpg    https://w.wallhaven.cc/full/r7/wallhaven-r79em1.jpg   cropbottom:64
+jolly-roger-flat-1920x1080.jpg          https://w.wallhaven.cc/full/43/wallhaven-43wgzv.jpg
+jolly-roger-crew-set-1920x1080.jpg      https://w.wallhaven.cc/full/8x/wallhaven-8xo83o.jpg
+jolly-roger-battlefield-1920x1080.jpg   https://w.wallhaven.cc/full/w8/wallhaven-w8r5qq.jpg
+jolly-roger-luffy-flag-1920x1080.jpg    https://w.wallhaven.cc/full/01/wallhaven-01xdl3.jpg
+jolly-roger-one-piece-gold-2560x1440.png https://w.wallhaven.cc/full/zm/wallhaven-zml6vg.png
+jolly-roger-zoro-2560x1440.png          https://w.wallhaven.cc/full/r7/wallhaven-r7p2d7.png
+one-piece-logo-3840x2160.png            https://w.wallhaven.cc/full/kx/wallhaven-kxm9y7.png
+
+# The Going Merry in a storm. The 7680x4320 original costs quickshell ~120 MB of memory per screen, so the
+# 1920x1080 copy is what the machine actually uses; both are kept.
+going-merry-storm-1920x1080.jpg         https://w.wallhaven.cc/full/72/wallhaven-72lej9.png   resize:1920x1080
+going-merry-storm-7680x4320.png         https://w.wallhaven.cc/full/72/wallhaven-72lej9.png
