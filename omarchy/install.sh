@@ -354,37 +354,23 @@ step_dictation() {
 }
 
 # ---------------------------------------------------------------------------
-# Wallpapers, per theme, from backgrounds/<theme>.txt. Omarchy reads ~/.config/omarchy/backgrounds/<theme> as the
+# Wallpapers, per theme, from backgrounds/<theme>/. Omarchy reads ~/.config/omarchy/backgrounds/<theme> as the
 # user's own background folder for that theme, alongside the ones the theme ships, and cycles all of them with
-# omarchy-theme-bg-next. The images are fan art belonging to their artists and this repo is public, so the
-# manifest holds URLs and this fetches them; see backgrounds/solitude.txt for the format.
+# omarchy-theme-bg-next. The images live in this repo; backgrounds/<theme>.txt records where each came from and
+# what was done to it. Linked rather than copied, so a wallpaper dropped into the repo shows up without rerunning
+# this, and one saved into the folder by hand is a file this repo does not own.
 step_backgrounds() {
-  have magick || { info "ImageMagick missing; skipping backgrounds"; return; }
-  local manifest theme dir name url op dest
-  for manifest in "$DOT"/backgrounds/*.txt; do
-    [ -e "$manifest" ] || continue
-    theme="$(basename "$manifest" .txt)"
-    dir="$HOME/.config/omarchy/backgrounds/$theme"
-    log "backgrounds for the $theme theme -> ${dir/#$HOME/\~}"
-    mkdir -p "$dir"
-    while read -r name url op; do
-      [ -n "$name" ] || continue
-      case "$name" in \#*) continue ;; esac
-      dest="$dir/$name"
-      if [ -s "$dest" ]; then info "present  $name"; continue; fi
-      if ! curl -fsSL --retry 2 -A "omarchy-dotfiles/1.0" "$url" -o "$TMP/bg"; then
-        warn "could not download $name from $url"; continue
-      fi
-      case "$op" in
-        resize:*) magick "$TMP/bg" -resize "${op#resize:}" -quality 92 "$dest" ;;
-        # Cut the stock-site watermark off the bottom, then scale back to full height rather than stretching:
-        # the picture loses a sliver from each side instead of changing shape.
-        cropbottom:*) magick "$TMP/bg" -gravity north -crop "x$(( $(magick identify -format %h "$TMP/bg") - ${op#cropbottom:} ))+0+0" \
-                        +repage -resize x1080 -gravity center -extent 1920x1080 -quality 92 "$dest" ;;
-        *) cp "$TMP/bg" "$dest" ;;
-      esac
-      info "fetched  $name"
-    done < "$manifest"
+  local dir theme dest image
+  for dir in "$DOT"/backgrounds/*/; do
+    [ -d "$dir" ] || continue
+    theme="$(basename "$dir")"
+    dest="$HOME/.config/omarchy/backgrounds/$theme"
+    log "backgrounds for the $theme theme ($(find "$dir" -type f | wc -l) images, $(du -sh "$dir" | cut -f1))"
+    mkdir -p "$dest"
+    for image in "$dir"*; do
+      [ -f "$image" ] || continue
+      link "$image" "$dest/$(basename "$image")"
+    done
   done
   info "switch backgrounds with omarchy-theme-bg-next, or omarchy-theme-bg-set <path>"
 }

@@ -1,15 +1,16 @@
-# Backgrounds for the `solitude` theme, fetched into ~/.config/omarchy/backgrounds/solitude by the
-# `backgrounds` step of install.sh. The images themselves are not in this repo: they are fan art belonging to
-# their artists, and this repo is public. One per line:
+# Where the wallpapers in backgrounds/solitude/ came from. The images themselves are in this repo and the
+# `backgrounds` step of install.sh links them into ~/.config/omarchy/backgrounds/solitude; this file is the
+# record of their source and of any edit made to them, so either can be redone.
 #
-#   <filename>  <url>  [op]
+#   <filename>  <url>  [edit]
 #
-# op is optional post-processing, applied with ImageMagick after download:
-#   resize:WxH        scale to fit, for a file that is larger than any screen here
-#   cropbottom:N      cut N pixels off the bottom, then rescale to 1920x1080 keeping the aspect ratio
-#                     (used to remove a stock-site watermark)
+# edit is what was applied to the download with ImageMagick:
+#   resize:WxH        scaled to fit, for a file larger than any screen here
+#   cropbottom:N      N pixels cut off the bottom, then rescaled to 1920x1080 keeping the aspect ratio, to
+#                     remove a stock-site watermark without stretching the picture
 #
-# Sources are wallhaven.cc, queried with atleast=1920x1080 and ratios=16x9 so nothing is upscaled.
+# All from wallhaven.cc, queried with atleast=1920x1080 and ratios=16x9 so nothing is upscaled. They are fan art
+# and belong to their artists.
 
 # One Piece: the Straw Hats' Jolly Roger
 jolly-roger-glow-clean-1920x1080.jpg    https://w.wallhaven.cc/full/r7/wallhaven-r79em1.jpg   cropbottom:64
