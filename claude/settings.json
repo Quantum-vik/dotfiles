@@ -45,6 +45,9 @@
     "command": "~/.claude/statusline.sh",
     "refreshInterval": 1
   },
+  "enabledPlugins": {
+    "mattpocock-skills@claude-plugins-official": true
+  },
   "alwaysThinkingEnabled": true,
   "effortLevel": "xhigh",
   "tui": "fullscreen",
@@ -64,7 +67,9 @@
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
-  "enabledPlugins": {
-    "mattpocock-skills@claude-plugins-official": true
+  "modelSettings": {
+    "claude-opus-5": {
+      "effortLevel": "medium"
+    }
   }
 }
