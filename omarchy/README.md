@@ -38,6 +38,7 @@ kitty/     kitty.conf  open-actions.conf           -> ~/.config/kitty/ (theme, a
            kitty-open-clicked-word                 -> ~/.local/bin/ (what Ctrl+click runs)
 warp/      warp-fallback  .service  .timer         -> ~/.local/bin, ~/.config/systemd/user/ (WARP fallback)
 plugins/   plugins.txt  bar.json                   -> ~/.config/omarchy/plugins/, the bar in ~/.config/omarchy/shell.json
+voxtype/   config.toml                             -> ~/.config/voxtype/ (dictation; seeded, not linked)
 menu/      omarchy-menu.jsonc                      -> ~/.config/omarchy/extensions/ (Setup -> Fan)
 ```
 
@@ -129,6 +130,40 @@ tells tmux to pass them through, which it otherwise drops (for clients that atta
 
 Keyboard pickers cover the same ground without the mouse. Each labels every match on screen; press the letter:
 Ctrl+Shift+F for a file path into VS Code, Ctrl+Shift+I for a `#41`, Ctrl+Shift+E for a URL (kitty's own).
+
+## Dictation
+
+Hold **F9** and talk; let go and the transcript types itself in wherever the cursor is. **Super+Ctrl+X** toggles
+instead of holding, which suits longer stretches. Omarchy provides both keys ([its own
+`bindings/voxtype.lua`](https://github.com/basecamp/omarchy)) and offers the install from its menu; the
+`dictation` step of `install.sh` does the same unattended.
+
+It is [voxtype](https://voxtype.io) and it runs **entirely on this machine**: whisper.cpp against a model in
+`~/.local/share/voxtype/models`, so nothing is recorded anywhere and it works offline. Nothing like Claude Code's
+`/voice`, which streams the audio to Anthropic to transcribe. A user systemd service (`voxtype.service`) keeps the
+daemon resident, because loading the model on every keypress would be the slow part.
+
+The pre-built backends all ship in the package, and the active one is whichever `/usr/bin/voxtype` points at. The
+install step moves that to the Vulkan build on any machine with a GPU, which on the HP 250R G10 means the Raptor
+Lake iGPU does the transcribing. Check with `voxtype setup gpu --status`; it takes effect on the next daemon
+restart, not immediately.
+
+`config.toml` is **seeded, not linked**: voxtype rewrites it when a new version migrates settings (it leaves the
+old one as `config.toml.bak`), which would clobber a symlink. After changing settings, copy the file back into
+`voxtype/` here. What the current one sets, beyond Omarchy's defaults:
+
+| | |
+| --- | --- |
+| `whisper.model = "base.en"` | English-only, 142 MB. `small.en` is more accurate and, on the GPU, barely slower |
+| `hotkey.enabled = false` | Hyprland owns the keys, so voxtype's own hotkey layer stays out of the way |
+| `output.mode = "type"` | types at the cursor through wtype, falling back to the clipboard if that fails |
+| `audio.pause_media = true` | pauses whatever is playing while recording |
+| feedback + notifications off | the bar indicator and the on-screen overlay are the only feedback |
+| `audio.max_duration_secs = 60` | a recording is cut off at a minute |
+
+Punctuation is not spoken — saying "comma" types the word — but whisper punctuates from the phrasing. The `.en`
+model is English-only; Hindi or mixed speech needs a multilingual model (`base`, `small`, `large-v3-turbo`) and
+`language = "auto"`.
 
 ## Shell plugins
 

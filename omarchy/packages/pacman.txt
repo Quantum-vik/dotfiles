@@ -39,6 +39,11 @@ flatpak
 snapshot
 inter-font
 
+# Voice dictation: whisper.cpp running locally, bound to F9 (see README.md "Dictation"). wtype is how it types
+# the transcript into the focused window. Both come from Omarchy's own repository.
+voxtype-bin
+wtype
+
 # Sensors and per-process network/disk use
 lm_sensors
 nethogs

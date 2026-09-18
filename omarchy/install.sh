@@ -331,15 +331,38 @@ step_fan() {
 }
 
 # ---------------------------------------------------------------------------
+# Voice dictation: hold F9 (or toggle with Super+Ctrl+X) and the transcript types itself in at the cursor.
+# Omarchy ships the keybindings (default/hypr/bindings/voxtype.lua) and offers the install from its menu; this
+# step does the same unattended. Everything runs locally -- whisper.cpp against a model in ~/.local/share/voxtype,
+# no audio leaves the machine -- so the first run downloads ~150 MB. voxtype rewrites config.toml when it migrates
+# settings between versions, so the config is seeded rather than linked; copy it back here after changing it.
+step_dictation() {
+  log "voice dictation (voxtype)"
+  have voxtype || { info "voxtype-bin not installed; run the packages step first"; return; }
+  seed "$DOT/voxtype/config.toml" "$HOME/.config/voxtype/config.toml"
+  voxtype setup --download --no-post-install --quiet || warn "model download failed"
+  # The pre-built Vulkan backend is already on disk; enabling it just repoints /usr/bin/voxtype at it, which is
+  # why this needs root. On the HP 250R G10 it moves transcription onto the Raptor Lake iGPU.
+  if omarchy-hw-vulkan && [ "$(readlink -f /usr/bin/voxtype)" != /usr/lib/voxtype/voxtype-vulkan ]; then
+    sudo -v
+    sudo voxtype setup gpu --enable >/dev/null || warn "could not switch voxtype to the Vulkan backend"
+  fi
+  voxtype setup systemd >/dev/null 2>&1 || true
+  systemctl --user restart voxtype 2>/dev/null || warn "voxtype.service did not restart"
+  # `voxtype setup gpu --status` writes straight to the terminal, so read the symlink it switches instead.
+  info "backend $(basename "$(readlink -f /usr/bin/voxtype)" | sed s/^voxtype-//); hold F9 to dictate"
+}
+
+# ---------------------------------------------------------------------------
 main() {
   [ "$(id -u)" -ne 0 ] || { echo "Run as your normal user; the script calls sudo where it needs to."; exit 1; }
   have omarchy-pkg-add || { echo "This installer is for Omarchy. On Ubuntu use ../linux/install.sh."; exit 1; }
   local steps=("$@")
-  [ ${#steps[@]} -gt 0 ] || steps=(packages tools desktop configs hyprland plugins fingerprint fan)
+  [ ${#steps[@]} -gt 0 ] || steps=(packages tools desktop configs hyprland plugins fingerprint fan dictation)
   for s in "${steps[@]}"; do
     case "$s" in
-      packages|tools|desktop|configs|hyprland|plugins|fingerprint|fan) "step_$s" ;;
-      *) echo "Unknown step '$s'. Steps: packages tools desktop configs hyprland plugins fingerprint fan"; exit 1 ;;
+      packages|tools|desktop|configs|hyprland|plugins|fingerprint|fan|dictation) "step_$s" ;;
+      *) echo "Unknown step '$s'. Steps: packages tools desktop configs hyprland plugins fingerprint fan dictation"; exit 1 ;;
     esac
   done
   log "done: ${steps[*]}"
