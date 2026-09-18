@@ -1,0 +1,2 @@
+# Backups apps leave beside their config when they rewrite it (voxtype and claude-view both do)
+*.bak
