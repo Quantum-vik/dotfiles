@@ -322,6 +322,10 @@ step_fan() {
   sudo -v
   sudo install -D -m 755 "$LNX/fan/fan-mode" /usr/local/sbin/fan-mode
   sudo install -D -m 644 "$LNX/fan/local.fan-mode.policy" /usr/share/polkit-1/actions/local.fan-mode.policy
+  # fan-mode keeps its state in /run and the CPU limits are lost on reboot and resume, so a unit reapplies `cool`.
+  sudo install -D -m 644 "$LNX/fan/fan-mode.service" /etc/systemd/system/fan-mode.service
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now fan-mode.service >/dev/null 2>&1 || warn "could not enable fan-mode.service"
   link "$DOT/menu/omarchy-menu.jsonc" "$HOME/.config/omarchy/extensions/omarchy-menu.jsonc"
   info "$(/usr/local/sbin/fan-mode status); switch it in Omarchy menu (Super+Space) -> Setup -> Fan"
 }

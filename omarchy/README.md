@@ -21,7 +21,7 @@ Then reboot once: the login shell, the Docker group and poweralertd all start cl
 | `hyprland` | Links `hypr/input.lua`, `hypr/bindings.lua` and `hypr/looknfeel.lua` (blur on, no gaps, cursor size 18) over Omarchy's empty override files; sets GTK's cursor size to match |
 | `plugins` | Installs the shell plugins in `plugins/plugins.txt` and applies the bar layout in `plugins/bar.json`; warns when a plugin's code is newer than the reviewed commit |
 | `fingerprint` | Runs Omarchy's fingerprint setup (sudo, password dialogs, lock screen). Its `libfprint-git` knows this laptop's reader, so nothing is built by hand |
-| `fan` | HP laptops only: the Ubuntu fan helper and polkit policy, switched from **Omarchy menu → Setup → Fan** |
+| `fan` | HP laptops only: the Ubuntu fan helper and polkit policy, switched from **Omarchy menu → Setup → Fan**; a unit puts the machine in `cool` at every boot and resume |
 
 Every step is safe to re-run. A file that differs from the repo is moved to `<file>.bak-<timestamp>`.
 
@@ -51,7 +51,7 @@ menu/      omarchy-menu.jsonc                      -> ~/.config/omarchy/extensio
 | Super+L locks | Same. Omarchy's workspace layout toggle moves to **Super+Alt+L** |
 | Super+V opens CopyQ | Super+V opens Omarchy's clipboard history. CopyQ isn't installed. Omarchy's "universal paste" on Super+V is gone; Ctrl+V pastes |
 | Shift+Super+3/4/5 screenshots | **Print** (Omarchy's) or **Alt+Shift+4**, like Cmd+Shift+4 on the Mac. Super+Shift+number moves windows between workspaces there |
-| Fan toggle in Quick Settings | Omarchy menu → Setup → Fan (Auto / Cool / Quiet), same helper, no password |
+| Fan toggle in Quick Settings | Omarchy menu → Setup → Fan (Auto / Cool / Quiet), same helper, no password. The modes cap CPU power rather than drive the fan, which HP's firmware owns: on this laptop a full load is ~96 °C on `auto`, ~79 °C on `cool` and ~52 °C on `quiet`, with one fan that runs 3,300–4,220 rpm. `fan-mode.service` applies `cool` at boot and after resume |
 | Fingerprint also at the login screen | sudo, password dialogs and lock screen. The login screen asks for the password |
 | Charger notifications (poweralertd) | Same |
 | tmux sessions come back after logout and reboot | Same. Omarchy's own `~/.config/tmux/tmux.conf` is moved aside, because tmux would load it on top of this repo's config |

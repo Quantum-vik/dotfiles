@@ -385,6 +385,10 @@ step_fan() {
   sudo -v
   sudo install -m 755 "$DOT/fan/fan-mode" /usr/local/sbin/fan-mode
   sudo install -m 644 "$DOT/fan/local.fan-mode.policy" /usr/share/polkit-1/actions/local.fan-mode.policy
+  # fan-mode keeps its state in /run and the CPU limits are lost on reboot and resume, so a unit reapplies `cool`.
+  sudo install -D -m 644 "$DOT/fan/fan-mode.service" /etc/systemd/system/fan-mode.service
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now fan-mode.service >/dev/null 2>&1 || warn "could not enable fan-mode.service"
 
   local uuid=fan-mode@quantumvik ext="$HOME/.local/share/gnome-shell/extensions/fan-mode@quantumvik" cur
   install -D -m 644 -t "$ext" "$DOT/fan/$uuid/metadata.json" "$DOT/fan/$uuid/extension.js"

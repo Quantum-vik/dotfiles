@@ -1,0 +1,18 @@
+[Unit]
+# Puts the machine in `cool` at every boot: turbo kept, CPU capped at 15 W sustained / 20 W bursts, which on the
+# HP 250R G10 is ~79 °C under full load instead of ~96 °C. fan-mode keeps its state in /run, and the CPU limits
+# it sets are lost on reboot and on resume, so this runs after both. Installed by the `fan` step of install.sh.
+# Switch modes by hand any time (Omarchy menu -> Setup -> Fan, or `fan-mode auto|cool|quiet`); this only sets
+# the starting point.
+Description=Cool CPU power mode (fan-mode cool)
+Documentation=https://github.com/Quantum-vik/dotfiles
+ConditionPathExists=/usr/local/sbin/fan-mode
+After=multi-user.target suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/fan-mode cool
+# Not RemainAfterExit: the unit has to be startable again to reapply the limits after each resume.
+
+[Install]
+WantedBy=multi-user.target suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
