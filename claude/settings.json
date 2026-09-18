@@ -25,6 +25,14 @@
             "command": "canberra-gtk-play -i complete >/dev/null 2>&1 &"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/quantumvik/.claude/claude-view/claude-view-hook.sh"
+          }
+        ]
       }
     ],
     "SessionStart": [
@@ -35,6 +43,66 @@
             "type": "command",
             "command": "bash '/home/quantumvik/.claude/hooks/herdr-agent-state.sh' session",
             "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/quantumvik/.claude/claude-view/claude-view-hook.sh"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/quantumvik/.claude/claude-view/claude-view-hook.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/quantumvik/.claude/claude-view/claude-view-hook.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/quantumvik/.claude/claude-view/claude-view-hook.sh"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/quantumvik/.claude/claude-view/claude-view-hook.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/quantumvik/.claude/claude-view/claude-view-hook.sh"
           }
         ]
       }
