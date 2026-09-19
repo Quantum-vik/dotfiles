@@ -5,7 +5,7 @@ Personal configuration files.
 - [`linux/`](linux/) — full Ubuntu 24.04 GNOME desktop setup with an installer. Start there on a new Linux machine.
 - [`omarchy/`](omarchy/) — the same setup on Omarchy 4 (Arch + Hyprland), reusing the configs in `linux/`.
 - [`tmux/`](tmux/) — tmux config (also linked by `linux/install.sh`).
-- [`claude/`](claude/) — Claude Code settings, keybindings, statusline.
+- [`claude/`](claude/) — Claude Code settings, keybindings, statusline, CLAUDE.md.
 
 ## tmux
 
@@ -38,10 +38,11 @@ Plugins: tmux-resurrect + tmux-continuum, with auto-restore on and 15-minute sav
 
 ## Claude Code
 
-`claude/` — settings, keybindings, and the custom statusline.
+`claude/` — settings, keybindings, the custom statusline, and `CLAUDE.md`, the instructions Claude Code
+reads at the start of every session on this machine.
 
 ```bash
-for f in settings.json keybindings.json statusline.sh; do
+for f in settings.json keybindings.json statusline.sh CLAUDE.md; do
   ln -sf ~/dotfiles/claude/$f ~/.claude/$f
 done
 chmod +x ~/.claude/statusline.sh

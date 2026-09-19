@@ -271,7 +271,7 @@ step_configs() {
   fi
   link "$DOT/kitty/kitty.conf"   "$HOME/.config/kitty/kitty.conf"
   link "$REPO/tmux/tmux.conf"    "$HOME/.tmux.conf"
-  for f in settings.json keybindings.json statusline.sh; do link "$REPO/claude/$f" "$HOME/.claude/$f"; done
+  for f in settings.json keybindings.json statusline.sh CLAUDE.md; do link "$REPO/claude/$f" "$HOME/.claude/$f"; done
 
   log "seeded configs (written only if missing; these apps rewrite their own files)"
   seed "$DOT/espanso/match/base.yml"      "$HOME/.config/espanso/match/base.yml"
