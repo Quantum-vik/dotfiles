@@ -1,0 +1,25 @@
+#!/bin/bash
+# Record a name for the current Claude Code session, for statusline.sh to display.
+#
+# Claude runs this once per session, right after asking what to call it (see CLAUDE.md). The name is keyed by
+# CLAUDE_CODE_SESSION_ID, which Claude Code puts in the environment of every command it runs, and which also
+# arrives in the statusline's JSON as .session_id -- the two meet at the file this writes. State, not config, so
+# it lives under XDG_STATE_HOME and survives a reboot: a session resumed days later keeps its name.
+set -euo pipefail
+
+dir="${XDG_STATE_HOME:-$HOME/.local/state}/claude/session-names"
+name="$*"
+
+[ -n "${CLAUDE_CODE_SESSION_ID:-}" ] || {
+  echo "claude-session-name: no CLAUDE_CODE_SESSION_ID; run this inside a Claude Code session" >&2
+  exit 1
+}
+[ -n "$name" ] || { echo "usage: claude-session-name <name>" >&2; exit 1; }
+
+mkdir -p "$dir"
+printf '%s\n' "$name" >"$dir/$CLAUDE_CODE_SESSION_ID"
+
+# Names of sessions untouched for a month are dead weight; the transcripts outlive them anyway.
+find "$dir" -type f -mtime +30 -delete 2>/dev/null || true
+
+echo "session named: $name"

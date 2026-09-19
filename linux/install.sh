@@ -272,6 +272,7 @@ step_configs() {
   link "$DOT/kitty/kitty.conf"   "$HOME/.config/kitty/kitty.conf"
   link "$REPO/tmux/tmux.conf"    "$HOME/.tmux.conf"
   for f in settings.json keybindings.json statusline.sh CLAUDE.md; do link "$REPO/claude/$f" "$HOME/.claude/$f"; done
+  link "$REPO/claude/claude-session-name" "$HOME/.local/bin/claude-session-name"
 
   log "seeded configs (written only if missing; these apps rewrite their own files)"
   seed "$DOT/espanso/match/base.yml"      "$HOME/.config/espanso/match/base.yml"

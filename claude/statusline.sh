@@ -2,6 +2,15 @@
 input=$(cat)
 
 MODEL=$(echo "$input" | jq -r '.model.display_name // "?"')
+
+# Session name, as set by `claude-session-name` (Claude runs it at the start of every session; see CLAUDE.md).
+SESSION_ID=$(echo "$input" | jq -r '.session_id // empty')
+NAME=""
+if [ -n "$SESSION_ID" ]; then
+  NAME=$(head -n1 "${XDG_STATE_HOME:-$HOME/.local/state}/claude/session-names/$SESSION_ID" 2>/dev/null)
+  # Long names push the numbers off a narrow terminal, so keep it to a glance.
+  [ "${#NAME}" -gt 28 ] && NAME="${NAME:0:27}…"
+fi
 PCT=$(echo "$input" | jq -r '.context_window.used_percentage // 0' | cut -d. -f1)
 
 # Get session-wide token usage from context_window
@@ -102,6 +111,7 @@ if [ -n "$WEEK" ]; then
 fi
 
 LINE="[$MODEL] $BAR $PCT%${SIZE_TAG:+/$SIZE_TAG}"
+[ -n "$NAME" ] && LINE="❯ $NAME | $LINE"
 [ -n "$EFFORT" ] && LINE="$LINE ⚡$EFFORT"
 LINE="$LINE | In:$TOKENS_IN_FMT Out:$TOKENS_OUT_FMT Total:$TOTAL_FMT"
 [ -n "$COST_FMT" ] && LINE="$LINE $COST_FMT"

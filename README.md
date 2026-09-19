@@ -41,11 +41,18 @@ Plugins: tmux-resurrect + tmux-continuum, with auto-restore on and 15-minute sav
 `claude/` — settings, keybindings, the custom statusline, and `CLAUDE.md`, the instructions Claude Code
 reads at the start of every session on this machine.
 
+`CLAUDE.md` has every session open by asking what to call it. Claude records the answer with
+`claude-session-name`, which writes it under `~/.local/state/claude/session-names` keyed by the session id
+Claude Code exports as `CLAUDE_CODE_SESSION_ID`; `statusline.sh` reads the same id back out of its own JSON
+and shows the name at the front of the line. Names outlive a reboot, so a resumed session keeps its own, and
+any untouched for a month are swept up.
+
 ```bash
 for f in settings.json keybindings.json statusline.sh CLAUDE.md; do
   ln -sf ~/dotfiles/claude/$f ~/.claude/$f
 done
 chmod +x ~/.claude/statusline.sh
+ln -sf ~/dotfiles/claude/claude-session-name ~/.local/bin/claude-session-name
 ```
 
 `settings.json` sets `attribution` to empty with `sessionUrl: false`, so commits and pull requests made through

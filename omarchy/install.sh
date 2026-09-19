@@ -197,6 +197,7 @@ step_configs() {
   link "$DOT/kitty/open-actions.conf" "$HOME/.config/kitty/open-actions.conf"
   link "$DOT/kitty/kitty-open-clicked-word" "$HOME/.local/bin/kitty-open-clicked-word"
   for f in settings.json keybindings.json statusline.sh CLAUDE.md; do link "$REPO/claude/$f" "$HOME/.claude/$f"; done
+  link "$REPO/claude/claude-session-name" "$HOME/.local/bin/claude-session-name"
 
   log "tmux: this repo's config replaces Omarchy's"
   # tmux reads ~/.tmux.conf AND ~/.config/tmux/tmux.conf when both exist, so Omarchy's file (Ctrl+Space prefix,
