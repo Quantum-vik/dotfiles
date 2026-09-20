@@ -85,5 +85,7 @@ o.bind("SUPER + V", "Clipboard manager", "omarchy-shell shell toggle omarchy.cli
 -- code:13 is the 4 key itself, as Omarchy's own Super+Shift+number bindings use, so Shift turning it into "$" can't matter.
 o.bind("ALT + SHIFT + code:13", "Screenshot", "omarchy-capture-screenshot")
 
--- Super+Shift+Escape suspends, matching Super+L for lock. Same `systemctl suspend` the Omarchy menu runs.
-o.bind("SUPER + SHIFT + ESCAPE", "Suspend", "systemctl suspend")
+-- Super+Shift+Escape sleeps, matching Super+L for lock. suspend-then-hibernate rather than the menu's plain
+-- suspend: sleeps to RAM for an instant wake, then hibernates itself to the swapfile before the battery can
+-- run flat, so an unattended laptop keeps its session either way.
+o.bind("SUPER + SHIFT + ESCAPE", "Sleep, then hibernate", "systemctl suspend-then-hibernate")
