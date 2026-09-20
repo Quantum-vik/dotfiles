@@ -84,3 +84,6 @@ o.bind("SUPER + V", "Clipboard manager", "omarchy-shell shell toggle omarchy.cli
 -- Alt+Shift+4 takes a screenshot, like Cmd+Shift+4 on the Mac: the same smart region picker as Print.
 -- code:13 is the 4 key itself, as Omarchy's own Super+Shift+number bindings use, so Shift turning it into "$" can't matter.
 o.bind("ALT + SHIFT + code:13", "Screenshot", "omarchy-capture-screenshot")
+
+-- Super+Shift+Escape suspends, matching Super+L for lock. Same `systemctl suspend` the Omarchy menu runs.
+o.bind("SUPER + SHIFT + ESCAPE", "Suspend", "systemctl suspend")
