@@ -89,3 +89,7 @@ o.bind("ALT + SHIFT + code:13", "Screenshot", "omarchy-capture-screenshot")
 -- suspend: sleeps to RAM for an instant wake, then hibernates itself to the swapfile before the battery can
 -- run flat, so an unattended laptop keeps its session either way.
 o.bind("SUPER + SHIFT + ESCAPE", "Sleep, then hibernate", "systemctl suspend-then-hibernate")
+
+-- Super+Shift+R reboots, beside Super+Shift+Escape for sleep. omarchy-system-reboot rather than `systemctl
+-- reboot`: it closes windows first, so Chrome and friends shut down cleanly instead of being killed.
+o.bind("SUPER + SHIFT + R", "Reboot", "omarchy-system-reboot")
