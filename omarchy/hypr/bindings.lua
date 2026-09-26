@@ -85,10 +85,12 @@ o.bind("SUPER + V", "Clipboard manager", "omarchy-shell shell toggle omarchy.cli
 -- code:13 is the 4 key itself, as Omarchy's own Super+Shift+number bindings use, so Shift turning it into "$" can't matter.
 o.bind("ALT + SHIFT + code:13", "Screenshot", "omarchy-capture-screenshot")
 
--- Super+Shift+Escape sleeps, matching Super+L for lock. suspend-then-hibernate rather than the menu's plain
--- suspend: sleeps to RAM for an instant wake, then hibernates itself to the swapfile before the battery can
--- run flat, so an unattended laptop keeps its session either way.
-o.bind("SUPER + SHIFT + ESCAPE", "Sleep, then hibernate", "systemctl suspend-then-hibernate")
+-- Super+Shift+Escape is the ONLY way this machine sleeps: never-sleep.service holds a block-mode inhibitor on
+-- sleep, idle and the lid switch, so nothing else can. Hence the -i, which deliberately overrides it.
+-- Straight to hibernate, not suspend-then-hibernate: the latter sleeps to RAM first and keeps drawing on the
+-- battery until the hibernate delay elapses. Hibernate writes to the swapfile and powers off, costing nothing.
+-- An idle laptop also used to suspend itself and wake into half-connected Wi-Fi, which lost a day of punches.
+o.bind("SUPER + SHIFT + ESCAPE", "Hibernate", "systemctl hibernate -i")
 
 -- Super+Shift+R reboots, beside Super+Shift+Escape for sleep. omarchy-system-reboot rather than `systemctl
 -- reboot`: it closes windows first, so Chrome and friends shut down cleanly instead of being killed.
