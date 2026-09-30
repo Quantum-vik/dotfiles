@@ -1,3 +1,8 @@
+# Dedupe PATH: .zshenv runs for every zsh (login, interactive, script, subshell)
+# and nested shells re-prepend, which is why .local/bin appeared 4x. -U keeps
+# the array unique, so every later append below is idempotent.
+typeset -U path PATH
+
 # uv / user-local binaries.
 # Checklist #5: the Mac version hardcoded /Users/quantum — use $HOME so this file
 # is portable across machines and usernames.

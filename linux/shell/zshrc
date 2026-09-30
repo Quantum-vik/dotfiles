@@ -132,6 +132,9 @@ setopt SHARE_HISTORY HIST_IGNORE_ALL_DUPS HIST_IGNORE_SPACE HIST_REDUCE_BLANKS E
 command -v batcat >/dev/null && alias bat='batcat'
 command -v fdfind >/dev/null && alias fd='fdfind'
 
+# Cursor Agent with Run Everything (skip command approvals)
+alias cr='cursor-agent --yolo'
+
 # fzf: Ctrl+R history, Ctrl+T files, Alt+C cd (Ubuntu path, then Arch/Omarchy path)
 [ -f /usr/share/doc/fzf/examples/key-bindings.zsh ] && . /usr/share/doc/fzf/examples/key-bindings.zsh
 [ -f /usr/share/doc/fzf/examples/completion.zsh ]   && . /usr/share/doc/fzf/examples/completion.zsh
