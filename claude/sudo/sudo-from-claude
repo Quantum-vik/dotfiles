@@ -1,0 +1,10 @@
+#!/bin/sh
+# PAM check (pam_exec in /etc/pam.d/sudo): exit 0 when this sudo was started
+# by Claude Code, so the fingerprint step is skipped and it goes straight to the
+# password. Anything else, or any error, exits 1 and sudo behaves as before.
+pid=$PPID
+while [ "${pid:-0}" -gt 1 ] 2>/dev/null; do
+  [ "$(cat /proc/$pid/comm 2>/dev/null)" = claude ] && exit 0
+  pid=$(awk '{print $4}' /proc/$pid/stat 2>/dev/null)
+done
+exit 1

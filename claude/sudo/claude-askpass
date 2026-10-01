@@ -1,0 +1,4 @@
+#!/bin/sh
+# SUDO_ASKPASS helper: `sudo -A` runs this to get the password from a masked
+# pop-up, so a tool without a terminal (Claude Code) never sees it.
+exec zenity --password --title="sudo password (requested by Claude Code)"

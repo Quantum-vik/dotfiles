@@ -55,6 +55,19 @@ chmod +x ~/.claude/statusline.sh
 ln -sf ~/dotfiles/claude/claude-session-name ~/.local/bin/claude-session-name
 ```
 
+### sudo from Claude Code
+
+Claude Code runs commands without a terminal, so plain `sudo` can't ask for a password there. `CLAUDE.md` has
+it run `sudo -A` instead: `settings.json` points `SUDO_ASKPASS` at `claude/sudo/claude-askpass`, which opens a
+masked zenity pop-up, and the password goes straight to sudo without Claude seeing it. Sudo started by Claude
+also skips the fingerprint reader (`sudo-from-claude`, checked from `/etc/pam.d/sudo`), so the pop-up comes up
+immediately; sudo everywhere else still uses the fingerprint.
+
+```bash
+ln -sf ~/dotfiles/claude/sudo/claude-askpass ~/.local/bin/claude-askpass
+sudo bash ~/dotfiles/claude/sudo/install.sh   # installs zenity, adds the PAM line (backs up pam.d/sudo first)
+```
+
 `settings.json` sets `attribution` to empty with `sessionUrl: false`, so commits and pull requests made through
 Claude Code carry no Co-Authored-By trailer, Claude-Session link or "Generated with Claude Code" footer.
 
