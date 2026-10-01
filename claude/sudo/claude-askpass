@@ -1,4 +1,6 @@
 #!/bin/sh
-# SUDO_ASKPASS helper: `sudo -A` runs this to get the password from a masked
-# pop-up, so a tool without a terminal (Claude Code) never sees it.
+# SUDO_ASKPASS helper: `sudo -A` runs this to get the password. A password left
+# in the keyring by claude-sudo-store (temporary, for unattended work) is used
+# silently; otherwise a masked pop-up asks, so Claude Code never sees it.
+secret-tool lookup service claude-sudo 2>/dev/null && exit 0
 exec zenity --password --title="sudo password (requested by Claude Code)"

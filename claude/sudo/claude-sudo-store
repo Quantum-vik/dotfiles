@@ -1,0 +1,16 @@
+#!/bin/sh
+# Put the sudo password in the GNOME keyring for a while, so `sudo -A` from
+# Claude Code works unattended. The pop-up pipes straight into the keyring; the
+# password never appears in a command line, a file, or Claude's output.
+#   claude-sudo-store [hours]   (default 12)   ·   claude-sudo-store --clear
+set -eu
+if [ "${1:-}" = "--clear" ]; then
+  secret-tool clear service claude-sudo && echo "claude-sudo: cleared"; exit 0
+fi
+hours="${1:-12}"
+zenity --password --title="Store sudo password for Claude Code (${hours}h)" \
+  | secret-tool store --label="Claude Code sudo (temporary)" service claude-sudo
+systemctl --user stop claude-sudo-expire.timer 2>/dev/null || true
+systemd-run --user --quiet --unit=claude-sudo-expire --on-active="${hours}h" \
+  secret-tool clear service claude-sudo
+echo "claude-sudo: stored, auto-clears in ${hours}h"

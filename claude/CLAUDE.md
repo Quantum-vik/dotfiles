@@ -21,3 +21,7 @@ step (`/usr/local/bin/sudo-from-claude` in `/etc/pam.d/sudo`), so the pop-up com
 - Don't hand the step back to me with `! sudo …` or switch to `pkexec`; use the pop-up.
 - Say in one line what the command does before you run it, so I know what I'm approving.
 - If the pop-up doesn't appear (no display, zenity missing), stop and tell me instead of working around it.
+- When I'm away, I may run `claude-sudo-store [hours]` to leave the password in the GNOME keyring for a while;
+  `claude-askpass` then answers `sudo -A` without a pop-up, and a timer clears it. Never read that entry
+  yourself (`secret-tool lookup service claude-sudo`), never print or copy it; only let `sudo -A` use it, and
+  only for what the task needs.

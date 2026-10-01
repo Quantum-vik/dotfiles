@@ -65,6 +65,7 @@ immediately; sudo everywhere else still uses the fingerprint.
 
 ```bash
 ln -sf ~/dotfiles/claude/sudo/claude-askpass ~/.local/bin/claude-askpass
+ln -sf ~/dotfiles/claude/sudo/claude-sudo-store ~/.local/bin/claude-sudo-store   # optional: unattended sudo for a few hours
 sudo bash ~/dotfiles/claude/sudo/install.sh   # installs zenity, adds the PAM line (backs up pam.d/sudo first)
 ```
 
