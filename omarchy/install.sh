@@ -4,7 +4,7 @@
 #   ./install.sh                     run every step, in order
 #   ./install.sh configs hyprland    run only the named steps
 #
-# Steps: packages  tools  desktop  configs  hyprland  plugins  fingerprint  fan
+# Steps: packages  tools  desktop  configs  hyprland  plugins  fingerprint  fan  virt
 #
 # App configs (shell, tmux, git, ssh, espanso, Claude Code, fan helper, poweralertd unit) are the same files
 # ../linux/install.sh uses, so both machines stay in sync. Omarchy keeps its own theme, bar and launcher, and kitty
@@ -377,15 +377,37 @@ step_backgrounds() {
 }
 
 # ---------------------------------------------------------------------------
+# Virtual Machine Manager: Linux and Windows guests on KVM. The packages are in packages/pacman.txt;
+# this turns the service on, grants this user the libvirt group, and starts the default NAT network.
+step_virt() {
+  log "Virtual Machine Manager (KVM)"
+  have virsh || { info "libvirt not installed; run the packages step first"; return; }
+  sudo -v
+  sudo systemctl enable --now libvirtd.socket
+  if id -nG "$USER" | grep -qw libvirt; then
+    info "already in the libvirt group"
+  else
+    sudo usermod -aG libvirt "$USER"
+    warn "added $USER to the libvirt group; log out and back in, then open Virtual Machine Manager"
+  fi
+  if ! sudo virsh net-info default >/dev/null 2>&1; then
+    warn "libvirt has no default network"; return
+  fi
+  sudo virsh net-autostart default >/dev/null
+  sudo virsh net-start default >/dev/null 2>&1 || true
+  info "default NAT network starts with libvirt"
+}
+
+# ---------------------------------------------------------------------------
 main() {
   [ "$(id -u)" -ne 0 ] || { echo "Run as your normal user; the script calls sudo where it needs to."; exit 1; }
   have omarchy-pkg-add || { echo "This installer is for Omarchy. On Ubuntu use ../linux/install.sh."; exit 1; }
   local steps=("$@")
-  [ ${#steps[@]} -gt 0 ] || steps=(packages tools desktop configs hyprland plugins fingerprint fan dictation backgrounds)
+  [ ${#steps[@]} -gt 0 ] || steps=(packages tools desktop configs hyprland plugins fingerprint fan dictation backgrounds virt)
   for s in "${steps[@]}"; do
     case "$s" in
-      packages|tools|desktop|configs|hyprland|plugins|fingerprint|fan|dictation|backgrounds) "step_$s" ;;
-      *) echo "Unknown step '$s'. Steps: packages tools desktop configs hyprland plugins fingerprint fan dictation backgrounds"; exit 1 ;;
+      packages|tools|desktop|configs|hyprland|plugins|fingerprint|fan|dictation|backgrounds|virt) "step_$s" ;;
+      *) echo "Unknown step '$s'. Steps: packages tools desktop configs hyprland plugins fingerprint fan dictation backgrounds virt"; exit 1 ;;
     esac
   done
   log "done: ${steps[*]}"

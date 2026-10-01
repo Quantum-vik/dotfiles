@@ -48,3 +48,12 @@ wtype
 lm_sensors
 nethogs
 iotop
+
+# Virtual machines. qemu-desktop is the x86_64 desktop build; edk2-ovmf is UEFI firmware and swtpm
+# is the virtual TPM a Windows 11 install asks for. dnsmasq serves libvirt's default NAT network.
+qemu-desktop
+libvirt
+virt-manager
+dnsmasq
+edk2-ovmf
+swtpm

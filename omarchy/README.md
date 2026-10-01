@@ -22,6 +22,7 @@ Then reboot once: the login shell, the Docker group and poweralertd all start cl
 | `plugins` | Installs the shell plugins in `plugins/plugins.txt` and applies the bar layout in `plugins/bar.json`; warns when a plugin's code is newer than the reviewed commit |
 | `fingerprint` | Runs Omarchy's fingerprint setup (sudo, password dialogs, lock screen). Its `libfprint-git` knows this laptop's reader, so nothing is built by hand |
 | `fan` | HP laptops only: the Ubuntu fan helper and polkit policy, switched from **Omarchy menu → Setup → Fan**; a unit puts the machine in `cool` at every boot and resume |
+| `virt` | Starts libvirtd at boot, adds you to the `libvirt` group, and autostarts the default NAT network. Virtual Machine Manager then runs Linux and Windows guests; log out once after the group change |
 
 Every step is safe to re-run. A file that differs from the repo is moved to `<file>.bak-<timestamp>`.
 
