@@ -208,6 +208,11 @@ step_configs() {
   fi
   link "$REPO/tmux/tmux.conf"    "$HOME/.tmux.conf"
 
+  # Friendly audio device names. Without this the pickers in Teams, Chrome and
+  # friends show the raw controller name ("Raptor Lake-P/U/H cAVS Headphones"),
+  # because the generic SOF profile supplies no nicer description.
+  link "$DOT/wireplumber/50-device-names.conf" "$HOME/.config/wireplumber/wireplumber.conf.d/50-device-names.conf"
+
   log "seeded configs (written only if missing; these apps rewrite their own files)"
   seed "$LNX/espanso/match/base.yml"      "$HOME/.config/espanso/match/base.yml"
   seed "$LNX/espanso/config/default.yml"  "$HOME/.config/espanso/config/default.yml"
@@ -215,6 +220,9 @@ step_configs() {
   seed "$LNX/ssh/config"                  "$HOME/.ssh/config" 600
   seed "$LNX/git/gitconfig"               "$HOME/.gitconfig"
   seed "$LNX/git/gitconfig-personal"      "$HOME/.gitconfig-personal"
+  # closeAppOnCross: without it, closing the Teams window only hides it to tray
+  # and the app keeps running (it sat on 2.8 GB of swapped pages for days).
+  seed "$DOT/flatpak/teams-for-linux.json" "$HOME/.var/app/com.github.IsmaelMartinez.teams_for_linux/config/teams-for-linux/config.json"
   if grep -qE '@[A-Z_]+@' "$HOME/.gitconfig" "$HOME/.gitconfig-personal" 2>/dev/null; then
     warn "fill in the @NAME@/@EMAIL@ placeholders in ~/.gitconfig and ~/.gitconfig-personal"
   fi
