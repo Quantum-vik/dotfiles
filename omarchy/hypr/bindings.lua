@@ -95,3 +95,9 @@ o.bind("SUPER + SHIFT + ESCAPE", "Hibernate", "systemctl hibernate -i")
 -- Super+Shift+R reboots, beside Super+Shift+Escape for sleep. omarchy-system-reboot rather than `systemctl
 -- reboot`: it closes windows first, so Chrome and friends shut down cleanly instead of being killed.
 o.bind("SUPER + SHIFT + R", "Reboot", "omarchy-system-reboot")
+
+-- Super+Ctrl+Shift+Escape shuts down, one modifier along from Super+Shift+Escape for hibernate, and the same
+-- shape as Windows' Ctrl+Shift+Escape so the fingers already know it. omarchy-system-shutdown, not `systemctl
+-- poweroff`: it closes windows first. A hard poweroff SIGKILLs Chrome's 60-odd processes and any running
+-- containers, which is where most of this machine's unsafe_shutdowns came from.
+o.bind("SUPER + CTRL + SHIFT + ESCAPE", "Shutdown", "omarchy-system-shutdown")
