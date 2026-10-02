@@ -1,4 +1,7 @@
 {
+  "env": {
+    "SUDO_ASKPASS": "/home/quantumvik/.local/bin/claude-askpass"
+  },
   "attribution": {
     "commit": "",
     "pr": "",
@@ -15,7 +18,7 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "opus[1m]",
+  "model": "opus",
   "hooks": {
     "Notification": [
       {
@@ -151,8 +154,5 @@
   "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true,
-  "env": {
-    "SUDO_ASKPASS": "/home/quantumvik/.local/bin/claude-askpass"
-  }
+  "voiceEnabled": true
 }
