@@ -1,0 +1,10 @@
+# Amkette XS Flow Plus mouse — Elan 2.4GHz receiver (04f3:026f).
+#
+# The vendor's settings tool (support.amkette.com/webapp/xs_flow_plus) is a
+# WebHID page: Chrome has to open /dev/hidrawN directly. Arch ships hidraw
+# nodes as 0600 root:root, so the browser sees nothing and the device either
+# never appears in the chooser or fails on connect.
+#
+# uaccess hands an ACL to whoever is logged in at the seat, rather than opening
+# the device to a whole group. Firefox has no WebHID at all, so use Chrome.
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="04f3", ATTRS{idProduct}=="026f", MODE="0660", TAG+="uaccess"

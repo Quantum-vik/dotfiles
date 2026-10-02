@@ -336,6 +336,16 @@ step_fan() {
   sudo systemctl daemon-reload
   sudo systemctl enable --now fan-mode.service >/dev/null 2>&1 || warn "could not enable fan-mode.service"
   link "$DOT/menu/omarchy-menu.jsonc" "$HOME/.config/omarchy/extensions/omarchy-menu.jsonc"
+}
+
+# ---------------------------------------------------------------------------
+step_hidraw() {
+  log "hidraw access for the Amkette mouse's WebHID settings tool"
+  sudo -v
+  sudo install -D -m 644 "$LNX/udev/70-amkette-webhid.rules" /etc/udev/rules.d/70-amkette-webhid.rules
+  sudo udevadm control --reload
+  sudo udevadm trigger --subsystem-match=hidraw
+  info "replug the receiver if the tool still cannot see it"
   info "$(/usr/local/sbin/fan-mode status); switch it in Omarchy menu (Super+Space) -> Setup -> Fan"
 }
 
@@ -411,11 +421,11 @@ main() {
   [ "$(id -u)" -ne 0 ] || { echo "Run as your normal user; the script calls sudo where it needs to."; exit 1; }
   have omarchy-pkg-add || { echo "This installer is for Omarchy. On Ubuntu use ../linux/install.sh."; exit 1; }
   local steps=("$@")
-  [ ${#steps[@]} -gt 0 ] || steps=(packages tools desktop configs hyprland plugins fingerprint fan dictation backgrounds virt)
+  [ ${#steps[@]} -gt 0 ] || steps=(packages tools desktop configs hyprland plugins fingerprint fan hidraw dictation backgrounds virt)
   for s in "${steps[@]}"; do
     case "$s" in
-      packages|tools|desktop|configs|hyprland|plugins|fingerprint|fan|dictation|backgrounds|virt) "step_$s" ;;
-      *) echo "Unknown step '$s'. Steps: packages tools desktop configs hyprland plugins fingerprint fan dictation backgrounds virt"; exit 1 ;;
+      packages|tools|desktop|configs|hyprland|plugins|fingerprint|fan|hidraw|dictation|backgrounds|virt) "step_$s" ;;
+      *) echo "Unknown step '$s'. Steps: packages tools desktop configs hyprland plugins fingerprint fan hidraw dictation backgrounds virt"; exit 1 ;;
     esac
   done
   log "done: ${steps[*]}"
