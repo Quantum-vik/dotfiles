@@ -348,9 +348,13 @@ step_hidraw() {
   log "hidraw access for the Amkette mouse's WebHID settings tool"
   sudo -v
   sudo install -D -m 644 "$LNX/udev/70-amkette-webhid.rules" /etc/udev/rules.d/70-amkette-webhid.rules
+  sudo install -D -m 644 "$LNX/udev/71-aula-rgb.rules" /etc/udev/rules.d/71-aula-rgb.rules
+  sudo install -D -m 644 "$DOT/systemd/aula-rgb.service" /etc/systemd/system/aula-rgb.service
+  sudo systemctl daemon-reload
   sudo udevadm control --reload
   sudo udevadm trigger --subsystem-match=hidraw
   info "replug the receiver if the tool still cannot see it"
+  info "the Aula F75 goes static white on plug-in (wired only; 2.4G has no lighting channel)"
   info "$(/usr/local/sbin/fan-mode status); switch it in Omarchy menu (Super+Space) -> Setup -> Fan"
 }
 

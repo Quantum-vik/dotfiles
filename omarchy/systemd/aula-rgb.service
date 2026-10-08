@@ -1,0 +1,12 @@
+[Unit]
+Description=Set the Aula F75 to static white when it is plugged in
+# Only meaningful while the keyboard is on USB: over the 2.4G dongle the
+# receiver forwards keystrokes only and the lighting protocol is unreachable.
+
+[Service]
+Type=oneshot
+# The LED interface is not ready the instant udev sees the device.
+ExecStartPre=/usr/bin/sleep 2
+ExecStart=/usr/bin/openrgb --noautoconnect -d 0 -m Direct -c FFFFFF
+# A keyboard unplugged mid-run is normal, not a failure worth logging as one.
+SuccessExitStatus=1

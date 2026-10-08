@@ -1,0 +1,5 @@
+# Aula F75 (Sinowealth 258a:010c) — apply the static white profile on plug-in.
+#
+# SYSTEMD_WANTS rather than RUN+=: udev kills anything still running after its
+# event timeout, and openrgb needs a couple of seconds for the device to settle.
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="258a", ATTR{idProduct}=="010c", TAG+="systemd", ENV{SYSTEMD_WANTS}="aula-rgb.service"
