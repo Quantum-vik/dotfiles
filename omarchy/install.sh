@@ -208,6 +208,11 @@ step_configs() {
   fi
   link "$REPO/tmux/tmux.conf"    "$HOME/.tmux.conf"
 
+  # Blocks idle-suspend and the lid switch so the Auto-Keka punch timers always
+  # fire on a settled network. Not 'sleep': that also refused UPower's critical
+  # battery hibernate, which cost one hard power-off at 0%.
+  link "$DOT/systemd/never-sleep.service" "$HOME/.config/systemd/user/never-sleep.service"
+
   # Friendly audio device names. Without this the pickers in Teams, Chrome and
   # friends show the raw controller name ("Raptor Lake-P/U/H cAVS Headphones"),
   # because the generic SOF profile supplies no nicer description.

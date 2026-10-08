@@ -1,0 +1,21 @@
+[Unit]
+Description=Block automatic sleep and idle
+Documentation=man:systemd-inhibit(1)
+
+[Service]
+# Holds a BLOCK-mode inhibitor lock for as long as it runs, so anything asking
+# logind to suspend (or to act on idle) is refused rather than delayed. This is
+# what keeps the Auto-Keka punch timers able to fire: a laptop asleep at 10:00
+# wakes into an unsettled network and the punch fails.
+# Closing the lid no longer sleeps it either. Super+Shift+Escape overrides with -i.
+# 'sleep' is deliberately NOT in --what. Blocking it too meant UPower's critical
+# battery action (hibernate at 2%) was refused as well, so a laptop left locked
+# overnight drained to zero and died hard instead of hibernating - that is where
+# the unsafe shutdown on 2026-10-06 came from. 'idle' and 'handle-lid-switch'
+# still cover the case this unit exists for: nothing suspends on its own.
+ExecStart=/usr/bin/systemd-inhibit --what=idle:handle-lid-switch --who=%u --why=never-sleep --mode=block sleep infinity
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
