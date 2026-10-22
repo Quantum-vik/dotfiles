@@ -11,3 +11,19 @@ Host sp.github.com
     User git
     IdentityFile ~/.ssh/vikrant-singh-solytics_github
     IdentitiesOnly yes
+
+# Auto-Keka Windows test VM (libvirt)
+Host keka-win
+    HostName 192.168.122.244
+    User tester
+    IdentityFile ~/.ssh/vm/keka-vm
+    IdentitiesOnly yes
+    StrictHostKeyChecking accept-new
+
+# Auto-Keka Ubuntu test VM (libvirt, live session)
+Host keka-ubu
+    HostName 192.168.122.128
+    User ubuntu
+    IdentityFile ~/.ssh/vm/keka-vm
+    IdentitiesOnly yes
+    StrictHostKeyChecking accept-new

@@ -1,6 +1,6 @@
 {
   "position": "top",
-  "transparent": true,
+  "transparent": false,
   "centerAnchor": "omarchy.clock",
   "layout": {
     "left": [
@@ -63,7 +63,8 @@
         "id": "io.github.pjgeutjens.clockwork"
       },
       {
-        "id": "agx.screen-time"
+        "id": "agx.screen-time",
+        "weekTotalAsPct": false
       },
       {
         "id": "huacnlee.which-key"
@@ -76,9 +77,39 @@
       },
       {
         "id": "crmne.omastats",
-        "style": "text",
-        "modules": "cpu",
-        "barLabels": "icon"
+        "barLabels": "icon",
+        "barSensors": "cpu",
+        "batteryStyle": "",
+        "cpuStyle": "graph",
+        "disksSource": "all",
+        "disksStyle": "",
+        "gpuStyle": "",
+        "graphWidth": 36,
+        "historySeconds": 240,
+        "memoryStyle": "",
+        "modules": "",
+        "networkStyle": "",
+        "publicIp": true,
+        "refreshSeconds": 1,
+        "sensorsStyle": "",
+        "showActivity": true,
+        "showAddresses": true,
+        "showBreakdown": true,
+        "showCores": true,
+        "showDetails": true,
+        "showDevices": true,
+        "showFans": true,
+        "showGpu": true,
+        "showHistory": true,
+        "showInterfaces": true,
+        "showLoad": true,
+        "showProcesses": true,
+        "showTemperatures": true,
+        "showTotals": true,
+        "showVolumes": true,
+        "style": "both",
+        "tabs": "cpu,memory,disks,network,sensors,battery",
+        "temperatureUnit": "Celsius"
       },
       {
         "id": "omarchy.bluetooth"
