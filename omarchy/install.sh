@@ -198,6 +198,11 @@ step_configs() {
   link "$DOT/kitty/kitty-open-clicked-word" "$HOME/.local/bin/kitty-open-clicked-word"
   for f in settings.json keybindings.json statusline.sh CLAUDE.md; do link "$REPO/claude/$f" "$HOME/.claude/$f"; done
   link "$REPO/claude/claude-session-name" "$HOME/.local/bin/claude-session-name"
+  link "$REPO/cursor/settings.json" "$HOME/.config/Cursor/User/settings.json"
+  link "$REPO/cursor/statusline.sh" "$HOME/.cursor/statusline.sh"
+  if have cursor; then
+    while read -r extension; do cursor --install-extension "$extension" >/dev/null; done < "$REPO/cursor/extensions.txt"
+  fi
 
   log "tmux: this repo's config replaces Omarchy's"
   # tmux reads ~/.tmux.conf AND ~/.config/tmux/tmux.conf when both exist, so Omarchy's file (Ctrl+Space prefix,

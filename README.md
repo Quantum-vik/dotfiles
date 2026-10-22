@@ -6,6 +6,7 @@ Personal configuration files.
 - [`omarchy/`](omarchy/) — the same setup on Omarchy 4 (Arch + Hyprland), reusing the configs in `linux/`.
 - [`tmux/`](tmux/) — tmux config (also linked by `linux/install.sh`).
 - [`claude/`](claude/) — Claude Code settings, keybindings, statusline, CLAUDE.md.
+- [`cursor/`](cursor/) — Cursor editor settings, extensions, and CLI statusline.
 
 ## tmux
 
@@ -81,3 +82,9 @@ machineID), `projects/`, `history.jsonl`, `shell-snapshots/`, `cache/`.
 
 Plugins and marketplaces are not files — reinstall them with `/plugin` inside
 Claude Code rather than copying.
+
+## Cursor
+
+`cursor/` contains the editor settings, extension list, and CLI statusline. The
+Linux and Omarchy installers link the settings and statusline and install the
+listed extensions.
