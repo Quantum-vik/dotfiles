@@ -22,6 +22,7 @@ Then reboot once: the login shell, the Docker group and poweralertd all start cl
 | `plugins` | Installs the shell plugins in `plugins/plugins.txt` and applies the bar layout in `plugins/bar.json`; warns when a plugin's code is newer than the reviewed commit |
 | `fingerprint` | Runs Omarchy's fingerprint setup (sudo, password dialogs, lock screen). Its `libfprint-git` knows this laptop's reader, so nothing is built by hand |
 | `fan` | HP laptops only: the Ubuntu fan helper and polkit policy, switched from **Omarchy menu → Setup → Fan**; a unit puts the machine in `cool` at every boot and resume |
+| `look` | Applies `look.conf`: the Omarchy theme (Solitude), the wallpaper picked from `backgrounds/`, and the font. kitty's colours follow the theme, so this is the terminal theme too. After changing any of them, `./install.sh save-look` rewrites `look.conf` from the screen |
 | `virt` | Starts libvirtd at boot, adds you to the `libvirt` group, and autostarts the default NAT network. Virtual Machine Manager then runs Linux and Windows guests; log out once after the group change |
 
 Every step is safe to re-run. A file that differs from the repo is moved to `<file>.bak-<timestamp>`.
@@ -40,6 +41,7 @@ kitty/     kitty.conf  open-actions.conf           -> ~/.config/kitty/ (theme, a
 warp/      warp-fallback  .service  .timer         -> ~/.local/bin, ~/.config/systemd/user/ (WARP fallback)
 plugins/   plugins.txt  bar.json                   -> ~/.config/omarchy/plugins/, the bar in ~/.config/omarchy/shell.json
 voxtype/   config.toml                             -> ~/.config/voxtype/ (dictation; seeded, not linked)
+look.conf                                          theme, wallpaper and font in use (save-look writes it, look applies it)
 backgrounds/ <theme>/  <theme>.txt                -> ~/.config/omarchy/backgrounds/<theme>/ (wallpapers + where they came from)
 menu/      omarchy-menu.jsonc                      -> ~/.config/omarchy/extensions/ (Setup -> Fan)
 ```

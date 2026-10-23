@@ -4,7 +4,8 @@
 #   ./install.sh                     run every step, in order
 #   ./install.sh configs hyprland    run only the named steps
 #
-# Steps: packages  tools  desktop  configs  hyprland  plugins  fingerprint  fan  virt
+# Steps: packages  tools  desktop  configs  hyprland  plugins  fingerprint  fan  hidraw  dictation  backgrounds  look  virt
+# Not run by default: save-look (records the current theme, wallpaper and font into look.conf)
 #
 # App configs (shell, tmux, git, ssh, espanso, Claude Code, fan helper, poweralertd unit) are the same files
 # ../linux/install.sh uses, so both machines stay in sync. Omarchy keeps its own theme, bar and launcher, and kitty
@@ -408,6 +409,34 @@ step_backgrounds() {
   info "switch backgrounds with omarchy-theme-bg-next, or omarchy-theme-bg-set <path>"
 }
 
+# The theme, wallpaper and font this machine shows, from look.conf. kitty's colours come from the theme (its
+# kitty.conf includes the theme's), so this is also the terminal theme. `./install.sh save-look` rewrites
+# look.conf from whatever is on screen now; run it after changing any of the three.
+step_look() {
+  local THEME BACKGROUND FONT
+  # shellcheck source=look.conf
+  . "$DOT/look.conf"
+  log "look: $THEME theme, $(basename "$BACKGROUND"), $FONT"
+  if [ "$(omarchy theme current | tr '[:upper:] ' '[:lower:]-')" = "$THEME" ]; then info "theme already $THEME"
+  else omarchy theme set "$THEME"; fi
+  BACKGROUND="${BACKGROUND/#\~/$HOME}"
+  if [ -f "$BACKGROUND" ]; then omarchy theme bg set "$BACKGROUND"
+  else warn "wallpaper $BACKGROUND missing; run the backgrounds step first"; fi
+  if [ "$(omarchy font current)" = "$FONT" ]; then info "font already $FONT"
+  else omarchy font set "$FONT"; fi
+}
+
+step_save_look() {
+  local bg; bg="$(readlink -f "$HOME/.local/state/omarchy/current/background")"
+  cat > "$DOT/look.conf" <<EOF
+# Written by \`./install.sh save-look\` from what was on screen; the \`look\` step applies it.
+THEME=$(cat "$HOME/.local/state/omarchy/current/theme.name")
+BACKGROUND="${bg/#$HOME/\~}"
+FONT="$(omarchy font current)"
+EOF
+  log "saved look.conf"; sed 's/^/    /' "$DOT/look.conf"
+}
+
 # ---------------------------------------------------------------------------
 # Virtual Machine Manager: Linux and Windows guests on KVM. The packages are in packages/pacman.txt;
 # this turns the service on, grants this user the libvirt group, and starts the default NAT network.
@@ -435,11 +464,12 @@ main() {
   [ "$(id -u)" -ne 0 ] || { echo "Run as your normal user; the script calls sudo where it needs to."; exit 1; }
   have omarchy-pkg-add || { echo "This installer is for Omarchy. On Ubuntu use ../linux/install.sh."; exit 1; }
   local steps=("$@")
-  [ ${#steps[@]} -gt 0 ] || steps=(packages tools desktop configs hyprland plugins fingerprint fan hidraw dictation backgrounds virt)
+  [ ${#steps[@]} -gt 0 ] || steps=(packages tools desktop configs hyprland plugins fingerprint fan hidraw dictation backgrounds look virt)
   for s in "${steps[@]}"; do
     case "$s" in
-      packages|tools|desktop|configs|hyprland|plugins|fingerprint|fan|hidraw|dictation|backgrounds|virt) "step_$s" ;;
-      *) echo "Unknown step '$s'. Steps: packages tools desktop configs hyprland plugins fingerprint fan hidraw dictation backgrounds virt"; exit 1 ;;
+      packages|tools|desktop|configs|hyprland|plugins|fingerprint|fan|hidraw|dictation|backgrounds|look|virt) "step_$s" ;;
+      save-look) step_save_look ;;
+      *) echo "Unknown step '$s'. Steps: packages tools desktop configs hyprland plugins fingerprint fan hidraw dictation backgrounds look virt save-look"; exit 1 ;;
     esac
   done
   log "done: ${steps[*]}"
