@@ -118,7 +118,8 @@
   },
   "enabledPlugins": {
     "mattpocock-skills@claude-plugins-official": true,
-    "ponytail@ponytail": true
+    "ponytail@ponytail": true,
+    "postman@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "ponytail": {
