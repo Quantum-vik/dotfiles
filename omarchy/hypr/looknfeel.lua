@@ -73,3 +73,10 @@ hl.config({
 --     column_width = 0.97,
 --   },
 -- })
+
+-- Software cursor, so screen sharing (Meet, Zoom, etc.) captures the pointer. Hardware cursor planes are skipped by screencopy.
+hl.config({
+  cursor = {
+    no_hardware_cursors = 1,
+  },
+})
