@@ -218,6 +218,7 @@ step_configs() {
   # fire on a settled network. Not 'sleep': that also refused UPower's critical
   # battery hibernate, which cost one hard power-off at 0%.
   link "$DOT/systemd/never-sleep.service" "$HOME/.config/systemd/user/never-sleep.service"
+  systemctl --user enable --now never-sleep.service >/dev/null 2>&1 || warn "could not start never-sleep.service"
 
   # Friendly audio device names. Without this the pickers in Teams, Chrome and
   # friends show the raw controller name ("Raptor Lake-P/U/H cAVS Headphones"),
