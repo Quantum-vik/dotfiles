@@ -1,0 +1,62 @@
+filters:
+  and:
+    - file.inFolder("Jira")
+    - assigned == "Me"
+    - state == "Open"
+properties:
+  file.name:
+    displayName: Ticket
+views:
+  - type: table
+    name: All open
+    order:
+      - file.name
+      - summary
+      - status
+      - jira_status
+      - priority
+      - project
+    sort:
+      - property: priority
+        direction: ASC
+  - type: table
+    name: In Progress
+    filters:
+      and:
+        - status == "In Progress"
+    order:
+      - file.name
+      - summary
+      - jira_status
+      - priority
+  - type: table
+    name: In Review
+    filters:
+      and:
+        - status == "In Review"
+    order:
+      - file.name
+      - summary
+      - jira_status
+      - priority
+  - type: table
+    name: To Do
+    filters:
+      and:
+        - status == "To Do"
+    order:
+      - file.name
+      - summary
+      - jira_status
+      - priority
+  - type: table
+    name: Blocked / Backlog
+    filters:
+      or:
+        - status == "Blocked"
+        - status == "Backlog"
+    order:
+      - file.name
+      - summary
+      - jira_status
+      - priority

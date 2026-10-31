@@ -1,0 +1,10 @@
+# Obsidian theme and community plugins for the Work vault, fetched by the `obsidian` step at these release tags.
+# kind    id                         repo                              tag
+theme     Minimal                    kepano/obsidian-minimal           9.1.4
+plugin    obsidian-style-settings    mgmeyers/obsidian-style-settings  1.0.9
+plugin    obsidian-minimal-settings  kepano/obsidian-minimal-settings  9.0.0
+plugin    obsidian-kanban            mgmeyers/obsidian-kanban          2.0.51
+plugin    obsidian-charts            phibr0/obsidian-charts            3.9.0
+plugin    calendar                   liamcain/obsidian-calendar-plugin 1.5.10
+plugin    homepage                   mirnovov/obsidian-homepage        4.6.0
+plugin    obsidian-icon-folder       FlorianWoelki/obsidian-iconize    2.14.7

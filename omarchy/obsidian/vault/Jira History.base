@@ -1,0 +1,43 @@
+filters:
+  and:
+    - file.inFolder("Jira")
+properties:
+  file.name:
+    displayName: Ticket
+views:
+  - type: table
+    name: All issues
+    order:
+      - file.name
+      - summary
+      - type
+      - state
+      - jira_status
+      - priority
+      - assigned
+    sort:
+      - property: state
+        direction: DESC
+  - type: table
+    name: Open
+    filters:
+      and:
+        - state == "Open"
+    order:
+      - file.name
+      - summary
+      - type
+      - jira_status
+      - priority
+      - assigned
+  - type: table
+    name: Closed
+    filters:
+      and:
+        - state != "Open"
+    order:
+      - file.name
+      - summary
+      - type
+      - jira_status
+      - assigned

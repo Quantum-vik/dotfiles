@@ -4,7 +4,7 @@
 #   ./install.sh                     run every step, in order
 #   ./install.sh configs hyprland    run only the named steps
 #
-# Steps: packages  tools  desktop  configs  hyprland  plugins  fingerprint  fan  hidraw  dictation  backgrounds  look  virt
+# Steps: packages  tools  desktop  configs  hyprland  plugins  fingerprint  fan  hidraw  dictation  backgrounds  look  virt  obsidian
 # Not run by default: save-look (records the current theme, wallpaper and font into look.conf)
 #
 # App configs (shell, tmux, git, ssh, espanso, Claude Code, fan helper, poweralertd unit) are the same files
@@ -470,16 +470,61 @@ step_virt() {
 }
 
 # ---------------------------------------------------------------------------
+# The ~/Obsidian/Work vault the Jira sync (jira-sync/) writes into: its settings, page skeleton, theme, plugins
+# and the Work HQ launcher. Notes are never touched: vault files are seeded only when missing.
+step_obsidian() {
+  local vault="$HOME/Obsidian/Work" src="$DOT/obsidian/vault" reg="$HOME/.config/obsidian/obsidian.json"
+  local kind id repo tag f dir
+
+  log "Obsidian Work vault (~/Obsidian/Work)"
+  have obsidian || warn "obsidian not installed yet: run the 'packages' step"
+  while IFS= read -r -d '' f; do
+    seed "$f" "$vault/${f#"$src"/}"
+  done < <(find "$src" -type f -print0)
+  mkdir -p "$vault"/{Jira,Daily,Meetings,Notes}
+
+  # Opens the vault, not a file: with a file in the link, Homepage skips Home + today's daily note.
+  link "$DOT/obsidian/work-hq.desktop" "$HOME/.local/share/applications/work-hq.desktop"
+  if [ ! -e "$reg" ]; then
+    mkdir -p "$(dirname "$reg")"
+    printf '{"vaults":{"%s":{"path":"%s","ts":%s,"open":true}}}\n' \
+      "$(od -An -tx1 -N8 /dev/urandom | tr -d ' \n')" "$vault" "$(date +%s)000" > "$reg"
+    info "registered the vault with Obsidian"
+  fi
+
+  log "Obsidian theme and community plugins ($(list "$DOT/obsidian/plugins.txt" | wc -l), see obsidian/plugins.txt)"
+  while read -r kind id repo tag; do
+    if [ "$kind" = theme ]; then
+      dir="$vault/.obsidian/themes/$id"
+    else
+      dir="$vault/.obsidian/plugins/$id"
+    fi
+    if [ "$(jq -r .version "$dir/manifest.json" 2>/dev/null)" = "$tag" ]; then info "ok       $id $tag"; continue; fi
+    mkdir -p "$dir"
+    for f in manifest.json main.js styles.css theme.css; do
+      case "$kind:$f" in theme:main.js|theme:styles.css|plugin:theme.css) continue ;; esac
+      if [ "$kind" = theme ]; then
+        curl -fsSL -o "$TMP/$f" "https://raw.githubusercontent.com/$repo/$tag/$f"
+      else
+        curl -fsSL -o "$TMP/$f" "https://github.com/$repo/releases/download/$tag/$f" 2>/dev/null
+      fi && mv "$TMP/$f" "$dir/$f" || [ "$f" = styles.css ] || warn "could not fetch $id $f"
+    done
+    info "fetched  $id $tag"
+  done < <(list "$DOT/obsidian/plugins.txt")
+  info "first launch: Settings -> Community plugins -> Turn on community plugins, then reload"
+}
+
+# ---------------------------------------------------------------------------
 main() {
   [ "$(id -u)" -ne 0 ] || { echo "Run as your normal user; the script calls sudo where it needs to."; exit 1; }
   have omarchy-pkg-add || { echo "This installer is for Omarchy. On Ubuntu use ../linux/install.sh."; exit 1; }
   local steps=("$@")
-  [ ${#steps[@]} -gt 0 ] || steps=(packages tools desktop configs hyprland plugins fingerprint fan hidraw dictation backgrounds look virt)
+  [ ${#steps[@]} -gt 0 ] || steps=(packages tools desktop configs hyprland plugins fingerprint fan hidraw dictation backgrounds look virt obsidian)
   for s in "${steps[@]}"; do
     case "$s" in
-      packages|tools|desktop|configs|hyprland|plugins|fingerprint|fan|hidraw|dictation|backgrounds|look|virt) "step_$s" ;;
+      packages|tools|desktop|configs|hyprland|plugins|fingerprint|fan|hidraw|dictation|backgrounds|look|virt|obsidian) "step_$s" ;;
       save-look) step_save_look ;;
-      *) echo "Unknown step '$s'. Steps: packages tools desktop configs hyprland plugins fingerprint fan hidraw dictation backgrounds look virt save-look"; exit 1 ;;
+      *) echo "Unknown step '$s'. Steps: packages tools desktop configs hyprland plugins fingerprint fan hidraw dictation backgrounds look virt obsidian save-look"; exit 1 ;;
     esac
   done
   log "done: ${steps[*]}"

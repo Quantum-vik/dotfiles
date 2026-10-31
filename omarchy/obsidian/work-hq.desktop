@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Work HQ
+Comment=Open the Obsidian Work vault (Home + today's daily note)
+Exec=/usr/bin/obsidian "obsidian://open?vault=Work"
+Icon=obsidian
+Categories=Office;

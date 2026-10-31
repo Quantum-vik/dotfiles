@@ -40,6 +40,7 @@ kitty/     kitty.conf  open-actions.conf           -> ~/.config/kitty/ (theme, a
            kitty-open-clicked-word                 -> ~/.local/bin/ (what Ctrl+click runs)
 warp/      warp-fallback  .service  .timer         -> ~/.local/bin, ~/.config/systemd/user/ (WARP fallback)
 jira-sync/ jira-obsidian-sync  .service  .timer    -> ~/.local/bin, ~/.config/systemd/user/ (Jira -> Obsidian)
+obsidian/  vault/  plugins.txt  work-hq.desktop    -> ~/Obsidian/Work (seeded), its theme + plugins, the launcher
 plugins/   plugins.txt  bar.json                   -> ~/.config/omarchy/plugins/, the bar in ~/.config/omarchy/shell.json
 voxtype/   config.toml                             -> ~/.config/voxtype/ (dictation; seeded, not linked)
 look.conf                                          theme, wallpaper and font in use (save-look writes it, look applies it)
@@ -173,9 +174,11 @@ model is English-only; Hindi or mixed speech needs a multilingual model (`base`,
 ## Jira → Obsidian sync
 
 `jira-sync/jira-obsidian-sync` writes every Jira issue ever assigned to me into the `~/Obsidian/Work` vault, one
-note per issue in `Jira/`, and redraws the progress bars in `Home.md`. Only the synced properties are overwritten;
-anything added to a note by hand (project, due, tags, the body) is kept. The timer runs it every day at 09:00, 12:00, 15:00, 18:00 and 21:00,
-and catches up at the next boot if the laptop was off. It uses only the Python standard library.
+note per issue in `Jira/`, and rewrites `Progress.md` (charts, plus a collapsible list behind every number),
+`New.md` (what was assigned to me today and this week) and `Board.md` (Kanban). Only the synced properties are
+overwritten; anything added to a note by hand (project, due, tags, the body) is kept. The timer runs it every day
+at 09:00, 12:00, 15:00, 18:00 and 21:00, and catches up at the next boot if the laptop was off. It uses only the
+Python standard library.
 
 Credentials, by hand (an API token from https://id.atlassian.com/manage-profile/security/api-tokens):
 
@@ -185,7 +188,21 @@ secret-tool store --label='Jira sync' service jira-sync    # paste the token at 
 jira-obsidian-sync                                         # run once now
 ```
 
-The vault itself (notes, `.base` views, templates) is not in this repo.
+## Obsidian
+
+The `obsidian` step sets up the vault the sync writes into:
+
+- `obsidian/vault/`: its settings (`.obsidian/*.json`, plugin settings) and skeleton (`Home.md`, `Tasks.base`,
+  `Jira History.base`, `Templates/`). Seeded, so copied only when missing: Obsidian rewrites its own settings, and
+  the notes are mine. To record a settings change made in the app, copy the file back into `obsidian/vault/`.
+- `obsidian/plugins.txt`: the Minimal theme and community plugins (Style Settings, Minimal Theme Settings, Kanban,
+  Charts, Calendar, Homepage, Iconize) at fixed release tags, fetched from GitHub. They're third-party code that
+  runs inside Obsidian; read a release before bumping its tag.
+- `obsidian/work-hq.desktop`: the Work HQ launcher. It opens the vault, and Homepage then opens Home (pinned) and
+  today's daily note. A link that names a file would make Homepage skip that.
+
+Obsidian keeps community plugins off in a new vault: on first launch, Settings → Community plugins → Turn on
+community plugins, then reload. Notes, daily notes and the Jira notes are not in this repo.
 
 ## Wallpapers
 
