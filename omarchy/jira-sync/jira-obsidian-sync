@@ -22,6 +22,8 @@ from pathlib import Path
 VAULT = Path.home() / "Obsidian" / "Work"
 JIRA_DIR = VAULT / "Jira"
 HOME = VAULT / "Home.md"
+BOARD_FILE = VAULT / "Board.md"
+LANES = ("In Progress", "In Review", "To Do", "Blocked", "Backlog")
 SITE = "https://solytics.atlassian.net"
 JQL = "assignee = currentUser() OR assignee WAS currentUser() ORDER BY key DESC"
 FIELDS = "summary,status,issuetype,priority,parent,assignee"
@@ -111,24 +113,52 @@ def bar(done, total, width=20):
 
 
 def progress_block(rows):
-    lines = ["```", f"{'Type':<9} {'Progress':<20}  Done / Total"]
-    by_type = {}
-    for r in rows:
-        by_type.setdefault(r["type"], []).append(r)
-    for t, rs in sorted(by_type.items(), key=lambda kv: -len(kv[1])):
-        done = sum(r["state"] != "Open" for r in rs)
-        lines.append(f"{t:<9} {bar(done, len(rs))}  {done:>3} / {len(rs)}")
-    done = sum(r["state"] != "Open" for r in rows)
-    pct = round(100 * done / len(rows)) if rows else 0
-    lines += [f"{'Overall':<9} {bar(done, len(rows))}  {done:>3} / {len(rows)} ({pct}%)", "```", ""]
-    states = Counter(r["state"] for r in rows)
-    lines += ["```mermaid", "pie showData title All issues by state"]
-    lines += [f'    "{s}" : {n}' for s, n in states.most_common()]
-    lines += ["```", ""]
+    """Charts-plugin blocks (stacked bars by type, doughnut by state) plus a one-line overall bar."""
+    by_type = Counter(r["type"] for r in rows)
+    types = [t for t, _ in by_type.most_common()]
+    done = Counter(r["type"] for r in rows if r["state"] != "Open")
+    total_done = sum(done.values())
+    pct = round(100 * total_done / len(rows)) if rows else 0
+    states = Counter(r["state"] for r in rows).most_common()
     mine = Counter(r["status"] for r in rows if r["assigned"] == "Me" and r["state"] == "Open")
-    order = ("In Progress", "In Review", "To Do", "Blocked", "Backlog")
-    lines.append("**My open work:** " + " · ".join(f"{s} {mine[s]}" for s in order if mine[s]))
-    return "\n".join(lines)
+    return "\n".join([
+        f"**Overall** `{bar(total_done, len(rows))}` **{total_done} / {len(rows)} done ({pct}%)**",
+        "",
+        "```chart",
+        "type: bar",
+        f"labels: {json.dumps(types)}",
+        "series:",
+        f"  - title: Done\n    data: {json.dumps([done[t] for t in types])}",
+        f"  - title: Open\n    data: {json.dumps([by_type[t] - done[t] for t in types])}",
+        "stacked: true",
+        "beginAtZero: true",
+        "width: 90%",
+        "```",
+        "",
+        "```chart",
+        "type: doughnut",
+        f"labels: {json.dumps([s for s, _ in states])}",
+        "series:",
+        f"  - title: Issues\n    data: {json.dumps([n for _, n in states])}",
+        "width: 45%",
+        "labelColors: true",
+        "```",
+        "",
+        "**My open work:** " + " · ".join(f"{s} {mine[s]}" for s in LANES if mine[s]),
+    ])
+
+
+def board_text(rows):
+    """Kanban-plugin board of my open issues, one lane per board status. Jira stays the source of truth."""
+    mine = [r for r in rows if r["assigned"] == "Me" and r["state"] == "Open"]
+    out = ["---", "", "kanban-plugin: board", "", "---", ""]
+    for lane in LANES:
+        out += [f"## {lane}", ""]
+        out += [f"- [ ] [[{r['key']}]] {r['summary']} **{r['priority']}**"
+                for r in sorted((r for r in mine if r["status"] == lane), key=lambda r: (r["priority"], r["key"]))]
+        out.append("")
+    out += ["", "%% kanban:settings", "```", json.dumps({"kanban-plugin": "board"}), "```", "%%", ""]
+    return "\n".join(out)
 
 
 def update_home(rows):
@@ -156,6 +186,9 @@ def sync(issues, me, projects=None):
             path.write_text(new)
             counts["updated" if old else "created"] += 1
     update_home(rows)
+    board = board_text(rows)
+    if not BOARD_FILE.exists() or BOARD_FILE.read_text() != board:
+        BOARD_FILE.write_text(board)
     return counts
 
 
@@ -198,6 +231,11 @@ def self_test():
     assert "tags:\n  - urgent" in again and again.endswith("my notes\n") and again.count("project:") == 1
     assert render_note(again, closed, "Other") == again
     assert bar(1, 2, 10) == "█████░░░░░" and project_for("Rule Based Automation Linking Engine") == "Link Rules"
+    rows = [props, closed | {"key": "MV-2"}]
+    block = progress_block(rows)
+    assert 'labels: ["Bug"]' in block and "data: [1]" in block and "1 / 2 done (50%)" in block
+    board = board_text(rows)
+    assert "kanban-plugin: board" in board and "## In Review\n\n- [ ] [[MV-1]] Fix AI chat **P1**" in board and "MV-2" not in board
     print("self-test ok")
 
 
