@@ -174,7 +174,7 @@ model is English-only; Hindi or mixed speech needs a multilingual model (`base`,
 
 `jira-sync/jira-obsidian-sync` writes every Jira issue ever assigned to me into the `~/Obsidian/Work` vault, one
 note per issue in `Jira/`, and redraws the progress bars in `Home.md`. Only the synced properties are overwritten;
-anything added to a note by hand (project, due, tags, the body) is kept. The timer runs it on weekdays at 09:00, 12:00, 15:00, 18:00 and 21:00,
+anything added to a note by hand (project, due, tags, the body) is kept. The timer runs it every day at 09:00, 12:00, 15:00, 18:00 and 21:00,
 and catches up at the next boot if the laptop was off. It uses only the Python standard library.
 
 Credentials, by hand (an API token from https://id.atlassian.com/manage-profile/security/api-tokens):

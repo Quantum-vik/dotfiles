@@ -1,8 +1,8 @@
 [Unit]
-Description=Jira -> Obsidian sync, weekdays every 3 hours from 09:00 to 21:00
+Description=Jira -> Obsidian sync, every 3 hours from 09:00 to 21:00
 
 [Timer]
-OnCalendar=Mon..Fri 09,12,15,18,21:00
+OnCalendar=*-*-* 09,12,15,18,21:00
 Persistent=true
 
 [Install]
