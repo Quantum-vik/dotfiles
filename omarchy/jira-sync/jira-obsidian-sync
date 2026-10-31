@@ -2,7 +2,8 @@
 """Sync every Jira issue ever assigned to me into the vault: one note per issue in Jira/.
 
 Only the synced properties are overwritten; anything else you add to a note (project, due,
-pr, tags, the note body) is kept. Home.md's progress block is regenerated on each run.
+pr, tags, the note body) is kept. Progress.md (charts, embedded in Home) and Board.md (Kanban)
+are rewritten on each run.
 
 Usage:
   jira-obsidian-sync                       fetch from Jira (email in ~/.config/jira-sync.env, token in keyring)
@@ -21,7 +22,7 @@ from pathlib import Path
 
 VAULT = Path.home() / "Obsidian" / "Work"
 JIRA_DIR = VAULT / "Jira"
-HOME = VAULT / "Home.md"
+PROGRESS_FILE = VAULT / "Progress.md"
 BOARD_FILE = VAULT / "Board.md"
 LANES = ("In Progress", "In Review", "To Do", "Blocked", "Backlog")
 SITE = "https://solytics.atlassian.net"
@@ -161,13 +162,9 @@ def board_text(rows):
     return "\n".join(out)
 
 
-def update_home(rows):
-    text = HOME.read_text()
-    start, end = "%% progress:start %%", "%% progress:end %%"
-    new = re.sub(re.escape(start) + r".*?" + re.escape(end),
-                 lambda _: f"{start}\n{progress_block(rows)}\n{end}", text, flags=re.S)
-    if new != text:
-        HOME.write_text(new)
+def write_if_changed(path, text):
+    if not path.exists() or path.read_text() != text:
+        path.write_text(text)
 
 
 def sync(issues, me, projects=None):
@@ -185,10 +182,8 @@ def sync(issues, me, projects=None):
         else:
             path.write_text(new)
             counts["updated" if old else "created"] += 1
-    update_home(rows)
-    board = board_text(rows)
-    if not BOARD_FILE.exists() or BOARD_FILE.read_text() != board:
-        BOARD_FILE.write_text(board)
+    write_if_changed(PROGRESS_FILE, progress_block(rows) + "\n")
+    write_if_changed(BOARD_FILE, board_text(rows))
     return counts
 
 
