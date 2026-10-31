@@ -29,6 +29,7 @@ BOARD_FILE = VAULT / "Board.md"
 NEW_FILE = VAULT / "New.md"
 NEW_LANE = "🆕 New today"
 LANES = ("In Progress", "In Review", "To Do", "Blocked", "Backlog")
+TASK_VIEW = {"Blocked": "Blocked / Backlog", "Backlog": "Blocked / Backlog"}  # Tasks.base view per lane
 SITE = "https://solytics.atlassian.net"
 JQL = "assignee = currentUser() OR assignee WAS currentUser() ORDER BY key DESC"
 FIELDS = "summary,status,issuetype,priority,parent,assignee"
@@ -138,8 +139,24 @@ def progress_block(rows):
     pct = round(100 * total_done / len(rows)) if rows else 0
     states = Counter(r["state"] for r in rows).most_common()
     mine = Counter(r["status"] for r in rows if r["assigned"] == "Me" and r["state"] == "Open")
+
+    def fold(callout, title, rs):  # collapsed callout listing the issues behind one number in the charts
+        items = sorted(rs, key=lambda r: (r["priority"], r["key"]))
+        return [f"> [!{callout}]- {title}"] + [
+            f"> - [[{r['key']}]] {r['summary']} · {r['jira_status']} · **{r['priority']}**"
+            f"{'' if r['assigned'] == 'Me' else ' · *now with someone else*'}" for r in items] + [""]
+
+    drill = ["### 🔎 What's behind the numbers", "*Click a box to see its issues.*", ""]
+    for t in types:
+        open_t = [r for r in rows if r["type"] == t and r["state"] == "Open"]
+        if open_t:
+            drill += fold("todo", f"{t} · {len(open_t)} open", open_t)
+    rejected = [r for r in rows if r["state"] == "Rejected"]
+    if rejected:
+        drill += fold("failure", f"Rejected · {len(rejected)}", rejected)
+    drill.append(f"Closed issues ({dict(states).get('Closed', 0)}): [[Jira History.base#Closed|Jira History → Closed]]")
     return "\n".join([
-        f"**Overall** `{bar(total_done, len(rows))}` **{total_done} / {len(rows)} done ({pct}%)**",
+        f"Overall `{bar(total_done, len(rows))}` **{total_done} / {len(rows)} done ({pct}%)**",
         "",
         "```chart",
         "type: bar",
@@ -161,7 +178,9 @@ def progress_block(rows):
         "labelColors: true",
         "```",
         "",
-        "**My open work:** " + " · ".join(f"{s} {mine[s]}" for s in LANES if mine[s]),
+        "**My open work:** " + " · ".join(f"[[Tasks.base#{TASK_VIEW.get(s, s)}|{s} {mine[s]}]]" for s in LANES if mine[s]),
+        "",
+        *drill,
     ])
 
 
@@ -267,6 +286,8 @@ def self_test():
     rows = [props, closed | {"key": "MV-2"}]
     block = progress_block(rows)
     assert 'labels: ["Bug"]' in block and "data: [1]" in block and "1 / 2 done (50%)" in block
+    assert "> [!todo]- Bug · 1 open\n> - [[MV-1]] Fix AI chat · QA Testing · **P1**\n" in block and "MV-2]]" not in block
+    assert "[[Tasks.base#In Review|In Review 1]]" in block
     board = board_text(rows)
     assert "kanban-plugin: board" in board and "## In Review\n\n- [ ] [[MV-1]] Fix AI chat **P1**" in board and "MV-2" not in board
     # assigned_on: set for a new note or a reassignment to me, never for a note already mine
