@@ -220,7 +220,7 @@ step_configs() {
   link "$DOT/systemd/never-sleep.service" "$HOME/.config/systemd/user/never-sleep.service"
   systemctl --user enable --now never-sleep.service >/dev/null 2>&1 || warn "could not start never-sleep.service"
 
-  # Weekday 11:00 Jira -> Obsidian sync (~/Obsidian/Work). Persistent, so a run missed while the laptop was off
+  # Weekday Jira -> Obsidian sync, every 3 hours 09:00-21:00 (~/Obsidian/Work). Persistent, so a run missed while the laptop was off
   # happens at the next boot. Needs JIRA_EMAIL in ~/.config/jira-sync.env and the API token in the keyring.
   link "$DOT/jira-sync/jira-obsidian-sync" "$HOME/.local/bin/jira-obsidian-sync"
   for u in jira-obsidian-sync.service jira-obsidian-sync.timer; do
