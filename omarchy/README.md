@@ -39,6 +39,7 @@ hypr/      input.lua  bindings.lua  looknfeel.lua  -> ~/.config/hypr/ (loaded af
 kitty/     kitty.conf  open-actions.conf           -> ~/.config/kitty/ (theme, and where Ctrl+click sends things)
            kitty-open-clicked-word                 -> ~/.local/bin/ (what Ctrl+click runs)
 warp/      warp-fallback  .service  .timer         -> ~/.local/bin, ~/.config/systemd/user/ (WARP fallback)
+jira-sync/ jira-obsidian-sync  .service  .timer    -> ~/.local/bin, ~/.config/systemd/user/ (Jira -> Obsidian)
 plugins/   plugins.txt  bar.json                   -> ~/.config/omarchy/plugins/, the bar in ~/.config/omarchy/shell.json
 voxtype/   config.toml                             -> ~/.config/voxtype/ (dictation; seeded, not linked)
 look.conf                                          theme, wallpaper and font in use (save-look writes it, look applies it)
@@ -168,6 +169,23 @@ old one as `config.toml.bak`), which would clobber a symlink. After changing set
 Punctuation is not spoken — saying "comma" types the word — but whisper punctuates from the phrasing. The `.en`
 model is English-only; Hindi or mixed speech needs a multilingual model (`base`, `small`, `large-v3-turbo`) and
 `language = "auto"`.
+
+## Jira → Obsidian sync
+
+`jira-sync/jira-obsidian-sync` writes every Jira issue ever assigned to me into the `~/Obsidian/Work` vault, one
+note per issue in `Jira/`, and redraws the progress bars in `Home.md`. Only the synced properties are overwritten;
+anything added to a note by hand (project, due, tags, the body) is kept. The timer runs it on weekdays at 11:00,
+and catches up at the next boot if the laptop was off. It uses only the Python standard library.
+
+Credentials, by hand (an API token from https://id.atlassian.com/manage-profile/security/api-tokens):
+
+```bash
+echo 'JIRA_EMAIL=you@company.com' > ~/.config/jira-sync.env
+secret-tool store --label='Jira sync' service jira-sync    # paste the token at the prompt
+jira-obsidian-sync                                         # run once now
+```
+
+The vault itself (notes, `.base` views, templates) is not in this repo.
 
 ## Wallpapers
 

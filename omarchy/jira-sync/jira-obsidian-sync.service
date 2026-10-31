@@ -1,0 +1,6 @@
+[Unit]
+Description=Sync Jira issues into the Obsidian Work vault
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/jira-obsidian-sync

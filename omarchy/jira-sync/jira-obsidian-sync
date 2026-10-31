@@ -1,0 +1,213 @@
+#!/usr/bin/env python3
+"""Sync every Jira issue ever assigned to me into the vault: one note per issue in Jira/.
+
+Only the synced properties are overwritten; anything else you add to a note (project, due,
+pr, tags, the note body) is kept. Home.md's progress block is regenerated on each run.
+
+Usage:
+  jira-obsidian-sync                       fetch from Jira (email in ~/.config/jira-sync.env, token in keyring)
+  jira-obsidian-sync --from-json F [F..]   import Jira search results saved as JSON
+  jira-obsidian-sync --self-test
+"""
+import base64
+import json
+import re
+import subprocess
+import sys
+import urllib.parse
+import urllib.request
+from collections import Counter
+from pathlib import Path
+
+VAULT = Path.home() / "Obsidian" / "Work"
+JIRA_DIR = VAULT / "Jira"
+HOME = VAULT / "Home.md"
+SITE = "https://solytics.atlassian.net"
+JQL = "assignee = currentUser() OR assignee WAS currentUser() ORDER BY key DESC"
+FIELDS = "summary,status,issuetype,priority,parent,assignee"
+ENV_FILE = Path.home() / ".config" / "jira-sync.env"
+
+SYNCED = ("key", "summary", "type", "state", "status", "jira_status", "priority", "assigned", "parent", "url")
+BOARD = {
+    "Draft": "Backlog", "Open": "To Do", "To Do": "To Do",
+    "Development In Progress": "In Progress", "Fixing in Progress": "In Progress",
+    "Integration Testing": "In Review", "QA Testing": "In Review", "UAT Testing": "In Review",
+    "Ready for QA Deployment": "In Review", "Ready for UAT Deployment": "In Review",
+    "More Information Required": "Blocked",
+}
+PRIORITY = {"Highest": "P0", "High": "P1", "Medium": "P2", "Low": "P3", "Lowest": "P3"}
+PROJECTS = (  # first match wins; only used when a note is created
+    ("Link Rules", ("link rule", "linking engine", "automation link")),
+    ("Document Chat", ("document chat", "chatbot not working for doc")),
+    ("Vault AI", ("ai", "rag", "vault bot", "vaultbot", "autofill", "agent", "langsmith", "bedrock", "regulatory mapper", "chat")),
+)
+
+
+def project_for(summary):
+    s = summary.lower()
+    for name, words in PROJECTS:
+        if any(re.search(rf"\b{re.escape(w)}\b", s) for w in words):
+            return name
+    return "Other"
+
+
+def props_for(issue, me):
+    f = issue["fields"]
+    status, category = f["status"]["name"], f["status"]["statusCategory"]["key"]
+    if status == "Rejected":
+        state = "Rejected"
+    elif category == "done":
+        state = "Closed"
+    else:
+        state = "Open"
+    board = "Done" if state != "Open" else BOARD.get(status, "In Progress" if category == "indeterminate" else "To Do")
+    return {
+        "key": issue["key"],
+        "summary": f["summary"].strip(),
+        "type": f["issuetype"]["name"],
+        "state": state,
+        "status": board,
+        "jira_status": status,
+        "priority": PRIORITY.get((f.get("priority") or {}).get("name"), "P3"),
+        "assigned": "Me" if (f.get("assignee") or {}).get("accountId") == me else "Someone else",
+        "parent": (f.get("parent") or {}).get("key", ""),
+        "url": f"{SITE}/browse/{issue['key']}",
+    }
+
+
+def split_note(text):
+    """Return ([(key, raw_lines)], body). Lines indented or starting with '- ' belong to the previous key."""
+    if not text.startswith("---\n"):
+        return [], text
+    end = text.find("\n---\n", 4)
+    if end == -1:
+        return [], text
+    entries = []
+    for line in text[4:end].splitlines():
+        m = re.match(r"([A-Za-z_][\w -]*):", line)
+        if m and not line.startswith((" ", "-")):
+            entries.append((m.group(1), [line]))
+        elif entries:
+            entries[-1][1].append(line)
+    return entries, text[end + 5:]
+
+
+def render_note(old_text, props, project):
+    entries, body = split_note(old_text) if old_text else ([], "\n## Notes\n\n")
+    owned = {k: [f"{k}: {json.dumps(v, ensure_ascii=False)}"] for k, v in props.items()}
+    out, seen = [], set()
+    for k, lines in entries:
+        out.extend(owned.get(k, lines))
+        seen.add(k)
+    out.extend(line for k in SYNCED if k not in seen for line in owned[k])
+    if "project" not in seen:
+        out.append(f"project: {json.dumps(project)}")
+    return "---\n" + "\n".join(out) + "\n---\n" + body
+
+
+def bar(done, total, width=20):
+    filled = round(width * done / total) if total else 0
+    return "█" * filled + "░" * (width - filled)
+
+
+def progress_block(rows):
+    lines = ["```", f"{'Type':<9} {'Progress':<20}  Done / Total"]
+    by_type = {}
+    for r in rows:
+        by_type.setdefault(r["type"], []).append(r)
+    for t, rs in sorted(by_type.items(), key=lambda kv: -len(kv[1])):
+        done = sum(r["state"] != "Open" for r in rs)
+        lines.append(f"{t:<9} {bar(done, len(rs))}  {done:>3} / {len(rs)}")
+    done = sum(r["state"] != "Open" for r in rows)
+    pct = round(100 * done / len(rows)) if rows else 0
+    lines += [f"{'Overall':<9} {bar(done, len(rows))}  {done:>3} / {len(rows)} ({pct}%)", "```", ""]
+    states = Counter(r["state"] for r in rows)
+    lines += ["```mermaid", "pie showData title All issues by state"]
+    lines += [f'    "{s}" : {n}' for s, n in states.most_common()]
+    lines += ["```", ""]
+    mine = Counter(r["status"] for r in rows if r["assigned"] == "Me" and r["state"] == "Open")
+    order = ("In Progress", "In Review", "To Do", "Blocked", "Backlog")
+    lines.append("**My open work:** " + " · ".join(f"{s} {mine[s]}" for s in order if mine[s]))
+    return "\n".join(lines)
+
+
+def update_home(rows):
+    text = HOME.read_text()
+    start, end = "<!-- progress:start -->", "<!-- progress:end -->"
+    new = re.sub(re.escape(start) + r".*?" + re.escape(end),
+                 lambda _: f"{start}\n{progress_block(rows)}\n{end}", text, flags=re.S)
+    if new != text:
+        HOME.write_text(new)
+
+
+def sync(issues, me, projects=None):
+    JIRA_DIR.mkdir(exist_ok=True)
+    counts, rows = Counter(), []
+    for issue in issues:
+        props = props_for(issue, me)
+        rows.append(props)
+        path = JIRA_DIR / f"{props['key']}.md"
+        old = path.read_text() if path.exists() else ""
+        project = (projects or {}).get(props["key"]) or project_for(props["summary"])
+        new = render_note(old, props, project)
+        if new == old:
+            counts["unchanged"] += 1
+        else:
+            path.write_text(new)
+            counts["updated" if old else "created"] += 1
+    update_home(rows)
+    return counts
+
+
+def jira_get(path, auth):
+    req = urllib.request.Request(SITE + path, headers={"Authorization": auth, "Accept": "application/json"})
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        return json.load(resp)
+
+
+def fetch():
+    env = dict(line.split("=", 1) for line in ENV_FILE.read_text().split() if "=" in line) if ENV_FILE.exists() else {}
+    email = env.get("JIRA_EMAIL")
+    token = subprocess.run(["secret-tool", "lookup", "service", "jira-sync"], capture_output=True, text=True).stdout.strip()
+    if not email or not token:
+        sys.exit(f"Missing Jira credentials: put JIRA_EMAIL=... in {ENV_FILE} and store the API token with "
+                 "`secret-tool store --label='Jira sync' service jira-sync`")
+    auth = "Basic " + base64.b64encode(f"{email}:{token}".encode()).decode()
+    me = jira_get("/rest/api/3/myself", auth)["accountId"]
+    issues, page = [], None
+    while True:
+        q = {"jql": JQL, "fields": FIELDS, "maxResults": 100, **({"nextPageToken": page} if page else {})}
+        data = jira_get("/rest/api/3/search/jql?" + urllib.parse.urlencode(q), auth)
+        issues += data["issues"]
+        page = data.get("nextPageToken")
+        if data.get("isLast", True) or not page:
+            return issues, me
+
+
+def self_test():
+    issue = {"key": "MV-1", "fields": {"summary": " Fix AI chat ", "status": {"name": "QA Testing", "statusCategory": {"key": "indeterminate"}},
+                                       "issuetype": {"name": "Bug"}, "priority": {"name": "High"}, "assignee": {"accountId": "me"}}}
+    props = props_for(issue, "me")
+    assert props["status"] == "In Review" and props["state"] == "Open" and props["priority"] == "P1" and props["assigned"] == "Me"
+    first = render_note("", props, project_for(props["summary"]))
+    assert 'project: "Vault AI"' in first and "## Notes" in first
+    edited = first.replace('project: "Vault AI"', "project: Mine\ndue: 2026-11-05\ntags:\n  - urgent") + "my notes\n"
+    closed = dict(props, state="Closed", status="Done", jira_status="Closed")
+    again = render_note(edited, closed, "Other")
+    assert 'state: "Closed"' in again and "project: Mine" in again and "due: 2026-11-05" in again
+    assert "tags:\n  - urgent" in again and again.endswith("my notes\n") and again.count("project:") == 1
+    assert render_note(again, closed, "Other") == again
+    assert bar(1, 2, 10) == "█████░░░░░" and project_for("Rule Based Automation Linking Engine") == "Link Rules"
+    print("self-test ok")
+
+
+if __name__ == "__main__":
+    if sys.argv[1:2] == ["--self-test"]:
+        self_test()
+    elif sys.argv[1:2] == ["--from-json"]:
+        dumps = [json.loads(Path(p).read_text()) for p in sys.argv[2:]]
+        issues = [n for d in dumps for n in d["issues"]["nodes"]]
+        print(dict(sync(issues, dumps[0]["context"]["atlassianAccountId"],
+                        json.loads((VAULT / ".sync" / "projects.json").read_text()))))
+    else:
+        print(dict(sync(*fetch())))

@@ -220,6 +220,15 @@ step_configs() {
   link "$DOT/systemd/never-sleep.service" "$HOME/.config/systemd/user/never-sleep.service"
   systemctl --user enable --now never-sleep.service >/dev/null 2>&1 || warn "could not start never-sleep.service"
 
+  # Weekday 11:00 Jira -> Obsidian sync (~/Obsidian/Work). Persistent, so a run missed while the laptop was off
+  # happens at the next boot. Needs JIRA_EMAIL in ~/.config/jira-sync.env and the API token in the keyring.
+  link "$DOT/jira-sync/jira-obsidian-sync" "$HOME/.local/bin/jira-obsidian-sync"
+  for u in jira-obsidian-sync.service jira-obsidian-sync.timer; do
+    install -D -m 644 "$DOT/jira-sync/$u" "$HOME/.config/systemd/user/$u"
+  done
+  systemctl --user daemon-reload
+  systemctl --user enable --now jira-obsidian-sync.timer >/dev/null 2>&1 || warn "could not enable jira-obsidian-sync.timer"
+
   # Friendly audio device names. Without this the pickers in Teams, Chrome and
   # friends show the raw controller name ("Raptor Lake-P/U/H cAVS Headphones"),
   # because the generic SOF profile supplies no nicer description.
