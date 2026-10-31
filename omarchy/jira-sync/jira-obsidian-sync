@@ -2,8 +2,9 @@
 """Sync every Jira issue ever assigned to me into the vault: one note per issue in Jira/.
 
 Only the synced properties are overwritten; anything else you add to a note (project, due,
-pr, tags, the note body) is kept. Progress.md (charts, embedded in Home) and Board.md (Kanban)
-are rewritten on each run.
+pr, tags, the note body) is kept. A note gets `assigned_on` the first time the sync sees the issue
+assigned to me. Progress.md (charts), New.md (what was assigned today / this week; both embedded in
+Home) and Board.md (Kanban) are rewritten on each run.
 
 Usage:
   jira-obsidian-sync                       fetch from Jira (email in ~/.config/jira-sync.env, token in keyring)
@@ -11,6 +12,7 @@ Usage:
   jira-obsidian-sync --self-test
 """
 import base64
+import datetime
 import json
 import re
 import subprocess
@@ -24,13 +26,14 @@ VAULT = Path.home() / "Obsidian" / "Work"
 JIRA_DIR = VAULT / "Jira"
 PROGRESS_FILE = VAULT / "Progress.md"
 BOARD_FILE = VAULT / "Board.md"
+NEW_FILE = VAULT / "New.md"
+NEW_LANE = "🆕 New today"
 LANES = ("In Progress", "In Review", "To Do", "Blocked", "Backlog")
 SITE = "https://solytics.atlassian.net"
 JQL = "assignee = currentUser() OR assignee WAS currentUser() ORDER BY key DESC"
 FIELDS = "summary,status,issuetype,priority,parent,assignee"
 ENV_FILE = Path.home() / ".config" / "jira-sync.env"
 
-SYNCED = ("key", "summary", "type", "state", "status", "jira_status", "priority", "assigned", "parent", "url")
 BOARD = {
     "Draft": "Backlog", "Open": "To Do", "To Do": "To Do",
     "Development In Progress": "In Progress", "Fixing in Progress": "In Progress",
@@ -95,6 +98,19 @@ def split_note(text):
     return entries, text[end + 5:]
 
 
+def old_value(entries, key):
+    for k, lines in entries:
+        if k == key:
+            raw = lines[0].split(":", 1)[1].strip()
+            return json.loads(raw) if raw.startswith('"') else raw
+    return ""
+
+
+def newly_assigned(old_text, props):
+    """True when this sync is the first to see the issue assigned to me (new note, or reassigned to me)."""
+    return props["assigned"] == "Me" and (not old_text or old_value(split_note(old_text)[0], "assigned") != "Me")
+
+
 def render_note(old_text, props, project):
     entries, body = split_note(old_text) if old_text else ([], "\n## Notes\n\n")
     owned = {k: [f"{k}: {json.dumps(v, ensure_ascii=False)}"] for k, v in props.items()}
@@ -102,7 +118,7 @@ def render_note(old_text, props, project):
     for k, lines in entries:
         out.extend(owned.get(k, lines))
         seen.add(k)
-    out.extend(line for k in SYNCED if k not in seen for line in owned[k])
+    out.extend(line for k in props if k not in seen for line in owned[k])
     if "project" not in seen:
         out.append(f"project: {json.dumps(project)}")
     return "---\n" + "\n".join(out) + "\n---\n" + body
@@ -149,14 +165,32 @@ def progress_block(rows):
     ])
 
 
-def board_text(rows):
-    """Kanban-plugin board of my open issues, one lane per board status. Jira stays the source of truth."""
+def new_text(rows, today):
+    """What was assigned to me today, and earlier in the last 7 days."""
+    week_ago = (datetime.date.fromisoformat(today) - datetime.timedelta(days=6)).isoformat()
+    mine = sorted((r for r in rows if r["assigned"] == "Me" and r.get("assigned_on", "") >= week_ago),
+                  key=lambda r: (r["assigned_on"], r["key"]), reverse=True)
+
+    def lines(rs):
+        return [f"- [[{r['key']}]] {r['summary']} · {r['type']} · **{r['priority']}** · {r['jira_status']}"
+                f"{'' if r['assigned_on'] == today else ' · ' + r['assigned_on']}" for r in rs] or ["Nothing."]
+
+    return "\n".join([f"**Assigned to me today ({today})**", *lines([r for r in mine if r["assigned_on"] == today]), "",
+                      "**Earlier this week**", *lines([r for r in mine if r["assigned_on"] != today]), ""])
+
+
+def board_text(rows, today=""):
+    """Kanban-plugin board of my open issues: a lane for what arrived today, then one lane per board status.
+    Jira stays the source of truth."""
     mine = [r for r in rows if r["assigned"] == "Me" and r["state"] == "Open"]
     out = ["---", "", "kanban-plugin: board", "", "---", ""]
-    for lane in LANES:
+    for lane in (NEW_LANE, *LANES):
+        def in_lane(r):
+            is_new = bool(today) and r.get("assigned_on") == today
+            return is_new if lane == NEW_LANE else not is_new and r["status"] == lane
         out += [f"## {lane}", ""]
         out += [f"- [ ] [[{r['key']}]] {r['summary']} **{r['priority']}**"
-                for r in sorted((r for r in mine if r["status"] == lane), key=lambda r: (r["priority"], r["key"]))]
+                for r in sorted(filter(in_lane, mine), key=lambda r: (r["priority"], r["key"]))]
         out.append("")
     out += ["", "%% kanban:settings", "```", json.dumps({"kanban-plugin": "board"}), "```", "%%", ""]
     return "\n".join(out)
@@ -167,14 +201,17 @@ def write_if_changed(path, text):
         path.write_text(text)
 
 
-def sync(issues, me, projects=None):
+def sync(issues, me, projects=None, today=None):
+    today = today or datetime.date.today().isoformat()
     JIRA_DIR.mkdir(exist_ok=True)
     counts, rows = Counter(), []
     for issue in issues:
         props = props_for(issue, me)
-        rows.append(props)
         path = JIRA_DIR / f"{props['key']}.md"
         old = path.read_text() if path.exists() else ""
+        if newly_assigned(old, props):
+            props["assigned_on"] = today
+        rows.append(dict(props, assigned_on=props.get("assigned_on") or old_value(split_note(old)[0], "assigned_on")))
         project = (projects or {}).get(props["key"]) or project_for(props["summary"])
         new = render_note(old, props, project)
         if new == old:
@@ -183,7 +220,8 @@ def sync(issues, me, projects=None):
             path.write_text(new)
             counts["updated" if old else "created"] += 1
     write_if_changed(PROGRESS_FILE, progress_block(rows) + "\n")
-    write_if_changed(BOARD_FILE, board_text(rows))
+    write_if_changed(NEW_FILE, new_text(rows, today))
+    write_if_changed(BOARD_FILE, board_text(rows, today))
     return counts
 
 
@@ -231,6 +269,18 @@ def self_test():
     assert 'labels: ["Bug"]' in block and "data: [1]" in block and "1 / 2 done (50%)" in block
     board = board_text(rows)
     assert "kanban-plugin: board" in board and "## In Review\n\n- [ ] [[MV-1]] Fix AI chat **P1**" in board and "MV-2" not in board
+    # assigned_on: set for a new note or a reassignment to me, never for a note already mine
+    theirs = render_note("", dict(props, assigned="Someone else"), "Other")
+    assert newly_assigned("", props) and newly_assigned(theirs, props) and not newly_assigned(first, props)
+    stamped = render_note(theirs, dict(props, assigned_on="2026-11-02"), "Other")
+    assert 'assigned_on: "2026-11-02"' in stamped and old_value(split_note(stamped)[0], "assigned_on") == "2026-11-02"
+    assert 'assigned_on: "2026-11-02"' in render_note(stamped, props, "Other")
+    rows = [dict(props, assigned_on="2026-11-02"), dict(props, key="MV-3", assigned_on="2026-10-30"),
+            dict(props, key="MV-4", assigned_on="2026-10-01"), dict(props, key="MV-5", assigned_on="")]
+    new = new_text(rows, "2026-11-02")
+    assert new.index("[[MV-1]]") < new.index("Earlier this week") < new.index("[[MV-3]]") and "MV-4" not in new and "MV-5" not in new
+    board = board_text(rows, "2026-11-02")
+    assert "## 🆕 New today\n\n- [ ] [[MV-1]]" in board and "## In Review\n\n- [ ] [[MV-3]]" in board
     print("self-test ok")
 
 
