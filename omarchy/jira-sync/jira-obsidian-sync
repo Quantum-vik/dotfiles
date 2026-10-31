@@ -163,7 +163,7 @@ def board_text(rows):
 
 def update_home(rows):
     text = HOME.read_text()
-    start, end = "<!-- progress:start -->", "<!-- progress:end -->"
+    start, end = "%% progress:start %%", "%% progress:end %%"
     new = re.sub(re.escape(start) + r".*?" + re.escape(end),
                  lambda _: f"{start}\n{progress_block(rows)}\n{end}", text, flags=re.S)
     if new != text:
