@@ -40,20 +40,20 @@
     ],
     "SessionStart": [
       {
-        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/quantumvik/.claude/claude-view/claude-view-hook.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "^(startup|resume|clear|compact|fork)$",
         "hooks": [
           {
             "type": "command",
             "command": "bash '/home/quantumvik/.claude/hooks/herdr-agent-state.sh' session",
             "timeout": 10
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/home/quantumvik/.claude/claude-view/claude-view-hook.sh"
           }
         ]
       }
