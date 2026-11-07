@@ -199,6 +199,7 @@ step_configs() {
   link "$DOT/kitty/kitty-open-clicked-word" "$HOME/.local/bin/kitty-open-clicked-word"
   for f in settings.json keybindings.json statusline.sh CLAUDE.md; do link "$REPO/claude/$f" "$HOME/.claude/$f"; done
   link "$REPO/claude/claude-session-name" "$HOME/.local/bin/claude-session-name"
+  link "$REPO/claude/agents/cursor.md" "$HOME/.claude/agents/cursor.md"
   link "$REPO/cursor/settings.json" "$HOME/.config/Cursor/User/settings.json"
   link "$REPO/cursor/statusline.sh" "$HOME/.cursor/statusline.sh"
   if have cursor; then
