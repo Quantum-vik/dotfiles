@@ -37,6 +37,11 @@ don't paste tokens or request bodies from them into the chat.
 
 ## Subagents: you orchestrate, Cursor searches and reviews, your agents write code
 
+**Every session, coding or not, hands searching and exploring to `cursor` subagents: finding files or code,
+tracing how something works, checking a claim against a codebase, and web research. Don't run those sweeps
+yourself or through the Explore agent; a single lookup whose target you already know (one file, one grep) is
+fine to do directly.**
+
 There is a `cursor` subagent (`~/.claude/agents/cursor.md`) that hands a task to the Cursor CLI. It is read-only:
 it never writes code. For coding work, split it like this:
 
@@ -48,7 +53,9 @@ it never writes code. For coding work, split it like this:
 4. **You plan, put the results in order, and run the tests at the end.** You orchestrate: decide what to search,
    triage the reports, brief the agents, and do the final verification yourself.
 
-Web research and anything that needs this conversation's context stay with your own subagents. Cursor runs on
-my company team account, so its usage shows on the team admin's dashboard; don't send it personal, non-work
-tasks. In a personal repo, your own subagents take Cursor's steps. Keep it on Auto (`--model auto`, never a
+Searching of any kind goes to Cursor, web research included (tell it to use web search). Anything that needs
+this conversation's context stays with your own subagents. Cursor runs on
+my company team account, so its usage shows on the team admin's dashboard. Searching is allowed anywhere,
+personal repos included: use Cursor for code search in any project. Its other step (reviewing a diff) stays
+work-only; in a personal repo, your own subagents do the review. Keep it on Auto (`--model auto`, never a
 named model): Cursor picks the model, and named models draw on an API usage pool that runs out fast.
