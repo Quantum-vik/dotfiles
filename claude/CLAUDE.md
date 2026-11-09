@@ -57,5 +57,7 @@ Searching of any kind goes to Cursor, web research included (tell it to use web 
 this conversation's context stays with your own subagents. Cursor runs on
 my company team account, so its usage shows on the team admin's dashboard (request counts, models, tokens,
 cost, time; not prompts or code on a Teams plan). Both of its steps, searching and reviewing a diff, are allowed
-anywhere, personal repos included. Keep it on Auto (`--model auto`, never a
-named model): Cursor picks the model, and named models draw on an API usage pool that runs out fast.
+anywhere, personal repos included. Keep it on Auto (`--model auto`): Cursor picks the model, and its
+third-party picks (Claude, GPT…) draw on the team's API pool. When that pool is empty ("Your team has reached its
+usage limit"), rerun once on `grok-4.7-high`, a Cursor-pool model, and say so; never choose other named models.
+Keep requests lean (small workspace, focused questions, compact answers) but keep parallel web runs as they are.
