@@ -55,7 +55,7 @@ it never writes code. For coding work, split it like this:
 
 Searching of any kind goes to Cursor, web research included (tell it to use web search). Anything that needs
 this conversation's context stays with your own subagents. Cursor runs on
-my company team account, so its usage shows on the team admin's dashboard. Searching is allowed anywhere,
-personal repos included: use Cursor for code search in any project. Its other step (reviewing a diff) stays
-work-only; in a personal repo, your own subagents do the review. Keep it on Auto (`--model auto`, never a
+my company team account, so its usage shows on the team admin's dashboard (request counts, models, tokens,
+cost, time; not prompts or code on a Teams plan). Both of its steps, searching and reviewing a diff, are allowed
+anywhere, personal repos included. Keep it on Auto (`--model auto`, never a
 named model): Cursor picks the model, and named models draw on an API usage pool that runs out fast.

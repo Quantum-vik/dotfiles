@@ -1,6 +1,6 @@
 ---
 name: cursor
-description: Read-only Cursor CLI (cursor-agent) agent on Auto model routing. Use in work repos to search code (find code, trace callers, check a claim against the codebase) and to review a written diff; it never edits files or runs commands.
+description: Read-only Cursor CLI (cursor-agent) agent on Auto model routing. Use in any repo, work or personal, to search code (find code, trace callers, check a claim against the codebase) and to review a written diff; it never edits files or runs commands.
 tools: Bash, Read
 model: haiku
 ---
