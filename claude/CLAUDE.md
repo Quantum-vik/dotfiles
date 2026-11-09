@@ -61,3 +61,12 @@ anywhere, personal repos included. Keep it on Auto (`--model auto`): Cursor pick
 third-party picks (Claude, GPT…) draw on the team's API pool. When that pool is empty ("Your team has reached its
 usage limit"), rerun once on `grok-4.7-high`, a Cursor-pool model, and say so; never choose other named models.
 Keep requests lean (small workspace, focused questions, compact answers) but keep parallel web runs as they are.
+
+**Web research is split by size: normal lookups go to the `openrouter` subagent, heavy or bigger research goes
+to Cursor.** Normal means a quick question with a short sourced answer (a fact, a release, a spec, a how-to);
+heavy means multi-source comparisons, deep dives, or anything needing many searches or long reading. Cursor stays
+available for web research on personal topics too. `openrouter` runs a free OpenRouter model with web search
+(`openrouter-research`, key in the keyring under `service openrouter`; never read or print it), and is for
+personal topics only: anything about my work (Solytics, Nuva-Org, their code, data or people) goes to Cursor
+whatever its size. Each call is one web search costing about $0.001, so ask focused questions. If it fails (rate
+limit, no key), fall back to Cursor and say so.

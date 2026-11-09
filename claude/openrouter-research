@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+"""Answer a web-research question with a free OpenRouter model plus OpenRouter's web search; print answer + sources.
+
+Personal use only: refuses to run inside work checkouts (~/Solytics, or a repo whose origin is under Nuva-Org).
+The model is always free; each web search costs about $0.001 (Parallel "fast"), billed to the OpenRouter credit.
+The API key is read from the keyring (`secret-tool store --label="OpenRouter API key" service openrouter`) and
+never printed.
+"""
+import argparse, json, os, subprocess, sys, urllib.error, urllib.request
+
+FREE_MODELS = ["nvidia/nemotron-3-ultra-550b-a55b:free", "google/gemma-4-31b-it:free", "openrouter/free"]
+
+
+def die(msg):
+    sys.exit(f"openrouter-research: {msg}")
+
+
+def is_work_dir():
+    if os.path.realpath(os.getcwd()).startswith(os.path.expanduser("~/Solytics")):
+        return True
+    r = subprocess.run(["git", "remote", "get-url", "origin"], capture_output=True, text=True)
+    return "Nuva-Org/" in r.stdout
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    p.add_argument("question")
+    p.add_argument("--model", action="append", help="free model to try (repeatable); default: %s" % FREE_MODELS)
+    p.add_argument("--results", type=int, default=5, help="web results to fetch (default 5)")
+    a = p.parse_args()
+
+    if is_work_dir():
+        die("refusing: this is a work checkout; OpenRouter is for personal research only")
+    models = a.model or FREE_MODELS
+    if any(not (m.endswith(":free") or m == "openrouter/free") for m in models):
+        die("only free models are allowed (':free' suffix or openrouter/free)")
+
+    key = subprocess.run(["secret-tool", "lookup", "service", "openrouter"], capture_output=True, text=True).stdout.strip()
+    if not key:
+        die('no key in the keyring; store one with: secret-tool store --label="OpenRouter API key" service openrouter')
+
+    body = {
+        "models": models,
+        "messages": [{"role": "user", "content": a.question}],
+        "plugins": [{"id": "web", "engine": "parallel", "mode": "fast", "max_results": a.results}],
+    }
+    req = urllib.request.Request("https://openrouter.ai/api/v1/chat/completions", json.dumps(body).encode(),
+                                 {"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=300) as r:
+            res = json.load(r)
+    except urllib.error.HTTPError as e:
+        die(f"HTTP {e.code}: {e.read().decode(errors='replace')[:500]}")
+    if "error" in res:
+        die(json.dumps(res["error"])[:500])
+
+    msg = res["choices"][0]["message"]
+    print(f"[model: {res.get('model')}]\n")
+    print(msg.get("content") or "(empty answer)")
+    seen = []
+    for ann in msg.get("annotations") or []:
+        c = ann.get("url_citation") or {}
+        if c.get("url") and c["url"] not in seen:
+            seen.append(c["url"])
+            print(f"{'\nSources:' if len(seen) == 1 else ''}\n- {c.get('title') or c['url']}: {c['url']}", end="")
+    print()
+
+
+if __name__ == "__main__":
+    main()
