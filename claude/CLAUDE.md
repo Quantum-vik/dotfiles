@@ -43,11 +43,15 @@ yourself or through the Explore agent; a single lookup whose target you already 
 fine to do directly.**
 
 There is a `cursor` subagent (`~/.claude/agents/cursor.md`) that hands a task to the Cursor CLI. It is read-only:
-it never writes code. For coding work, split it like this:
+it never edits files (it may draft a small patch as text, below). For coding work, split it like this:
 
 1. **Cursor agents do the searching.** Finding code, tracing callers, checking a claim against the codebase,
    fetching what a plan needs: brief a `cursor` agent (several in parallel when the areas are independent).
 2. **Your own subagents write the code.** Hand them the plan and the Cursor findings; they make the edits.
+   Small, self-contained fixes (a guard, a clamp, one function) may be drafted by Cursor instead: ask mode, run
+   from an empty scratch folder with the findings and file contents pasted into the prompt, answering with a
+   unified diff. Your agent then applies the draft in the repo, checks it, tests it and commits it. Cursor never
+   edits files itself and never runs in agent mode.
 3. **A Cursor agent reviews it, then the findings get fixed.** Send the written diff to a fresh `cursor` agent
    for review, and have the fixes made from what it reports.
 4. **You plan, put the results in order, and run the tests at the end.** You orchestrate: decide what to search,
