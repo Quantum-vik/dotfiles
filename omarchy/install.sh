@@ -220,6 +220,8 @@ step_configs() {
   # battery hibernate, which cost one hard power-off at 0%.
   link "$DOT/systemd/never-sleep.service" "$HOME/.config/systemd/user/never-sleep.service"
   systemctl --user enable --now never-sleep.service >/dev/null 2>&1 || warn "could not start never-sleep.service"
+  link "$DOT/systemd/memwatch.service" "$HOME/.config/systemd/user/memwatch.service"
+  systemctl --user enable --now memwatch.service >/dev/null 2>&1 || warn "could not start memwatch.service"
 
   # Jira -> Obsidian sync, every 3 hours 09:00-21:00, every day (~/Obsidian/Work). Persistent, so a run missed while the laptop was off
   # happens at the next boot. Needs JIRA_EMAIL in ~/.config/jira-sync.env and the API token in the keyring.

@@ -1,0 +1,27 @@
+#!/bin/bash
+# Every 30 s, append memory headroom and the 5 biggest processes (by RAM) to ~/.cache/memwatch.log, so a
+# short-lived memory hog can be named after it has exited. Each process line carries the Claude session that
+# started it (from CLAUDE_CODE_SESSION_ID in its environment) and its working directory.
+# The log is trimmed to its newest ~3 days (about 10 MB) whenever it passes 12 MB.
+log="$HOME/.cache/memwatch.log"
+names="${XDG_STATE_HOME:-$HOME/.local/state}/claude/session-names"
+
+while :; do
+  {
+    read -r avail < <(awk '/^MemAvailable:/{print int($2/1024)}' /proc/meminfo)
+    read -r swap < <(awk '/^SwapTotal:/{t=$2} /^SwapFree:/{f=$2} END{print int((t-f)/1024)}' /proc/meminfo)
+    stall=$(awk -F'avg10=' '/^full/{split($2,a," "); print a[1]}' /proc/pressure/memory)
+    echo "$(date '+%F %T')  avail ${avail}MB  swap ${swap}MB  mem-stall ${stall}%"
+    ps -eo pid=,rss=,etimes=,args= --sort=-rss | head -5 | while read -r pid rss up args; do
+      sid=$(tr '\0' '\n' <"/proc/$pid/environ" 2>/dev/null | sed -n 's/^CLAUDE_CODE_SESSION_ID=//p' | head -1)
+      sess=${sid:+$(head -n1 "$names/$sid" 2>/dev/null || echo "${sid:0:8}")}
+      printf '  %6dMB  pid %-8s up %6ss  %s  [%s]  %s\n' $((rss / 1024)) "$pid" "$up" \
+        "${sess:+session=$sess }" "$(readlink "/proc/$pid/cwd" 2>/dev/null)" "${args:0:160}"
+    done
+  } >>"$log"
+
+  if [ "$(stat -c %s "$log")" -gt 12000000 ]; then
+    tail -c 10000000 "$log" | tail -n +2 >"$log.tmp" && mv "$log.tmp" "$log"
+  fi
+  sleep 30
+done

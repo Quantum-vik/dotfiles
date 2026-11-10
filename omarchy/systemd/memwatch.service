@@ -1,0 +1,11 @@
+[Unit]
+Description=Log memory headroom and the biggest processes every 30 s (~/.cache/memwatch.log)
+
+[Service]
+ExecStart=%h/dotfiles/omarchy/memwatch/memwatch
+Nice=19
+IOSchedulingClass=idle
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
