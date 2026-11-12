@@ -100,6 +100,14 @@ FIVE_H_RESET=$(echo "$input" | jq -r '.rate_limits.five_hour.resets_at // empty'
 WEEK=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
 WEEK_RESET=$(echo "$input" | jq -r '.rate_limits.seven_day.resets_at // empty')
 
+# Snapshot for Claude to read its own limits (~/.cache/claude-limits.json; no secrets, just percentages + reset times)
+# One file per session (several Claude windows, possibly on different accounts, refresh at once).
+if [ -n "$FIVE_H$WEEK" ] && [ -n "$SESSION_ID" ]; then
+  mkdir -p ~/.cache/claude-limits
+  echo "$input" | jq -c '{at: (now|floor), session_id, rate_limits}' > ~/.cache/claude-limits/"$SESSION_ID".json.tmp 2>/dev/null \
+    && mv -f ~/.cache/claude-limits/"$SESSION_ID".json.tmp ~/.cache/claude-limits/"$SESSION_ID".json
+fi
+
 LIMITS=""
 if [ -n "$FIVE_H" ]; then
   LIMITS="Session $(printf '%.0f' "$FIVE_H")%"
