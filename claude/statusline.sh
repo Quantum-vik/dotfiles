@@ -75,7 +75,7 @@ GIT=""
 BRANCH=$(git -C "$CWD" branch --show-current 2>/dev/null)
 if [ -n "$BRANCH" ]; then
   DIRTY=""
-  [ -n "$(git -C "$CWD" status --porcelain 2>/dev/null)" ] && DIRTY="*"
+  [ -n "$(git --no-optional-locks -C "$CWD" status --porcelain 2>/dev/null)" ] && DIRTY="*"
   GIT="⎇ ${BRANCH}${DIRTY}"
 fi
 
