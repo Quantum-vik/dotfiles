@@ -18,6 +18,9 @@ while :; do
       printf '  %6dMB  pid %-8s up %6ss  %s  [%s]  %s\n' $((rss / 1024)) "$pid" "$up" \
         "${sess:+session=$sess }" "$(readlink "/proc/$pid/cwd" 2>/dev/null)" "${args:0:160}"
     done
+    # A hog spread over many small processes (worker pools, test runners) never makes the top 5, so also total by name.
+    ps -eo rss=,comm= | awk '{m[$2]+=$1; n[$2]++} END{for (c in m) printf "%d %s %d\n", m[c]/1024, c, n[c]}' |
+      sort -rn | head -5 | awk '{printf "  by-name %6dMB  %s x%d\n", $1, $2, $3}'
   } >>"$log"
 
   if [ "$(stat -c %s "$log")" -gt 12000000 ]; then
