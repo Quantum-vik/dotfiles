@@ -9,6 +9,22 @@ name arrives.
 Record the answer with `claude-session-name <name>`. That puts it in the statusline, where it stays visible for
 the rest of the session and after a resume.
 
+## Read my plan limits from the statusline snapshot
+
+The statusline (`~/.claude/statusline.sh`) writes this session's plan limits to
+`~/.cache/claude-limits/$CLAUDE_CODE_SESSION_ID.json` on every refresh: `rate_limits.five_hour` and
+`rate_limits.seven_day`, each with `used_percentage` and `resets_at` (epoch seconds), plus `at` (when written). Read
+it whenever I ask about my usage or limits, and before proposing large work (many agents, long runs), so estimates
+come as a share of what I have left:
+
+```sh
+f=~/.cache/claude-limits/$CLAUDE_CODE_SESSION_ID.json; jq -r '.rate_limits | to_entries[] | "\(.key) \(.value.used_percentage)% resets \(.value.resets_at | strflocaltime("%a %d %b %H:%M"))"' "$f"
+```
+
+- Read only your own session's file: other files there belong to other sessions, which may be on another account.
+- No file means no API reply yet this session (it appears after the first one); a file whose `at` is old is stale.
+- To measure what a batch of work costs, read it before and after the batch and report the difference.
+
 ## Passwords go through the sudo pop-up
 
 When a command needs my password (sudo, installing packages, system changes), run it with `sudo -A` through
@@ -79,3 +95,12 @@ available for web research on personal topics too. `openrouter` runs a free Open
 personal topics only: anything about my work (Solytics, Nuva-Org, their code, data or people) goes to Cursor
 whatever its size. Each call is one web search costing about $0.001, so ask focused questions. If it fails (rate
 limit, no key), fall back to Cursor and say so.
+
+## Make me re-derive what we built (`rederive` skill)
+
+**When a feature is finished and working, when the project I'm in is complete, or when I sound unsure why the code
+is built the way it is, start the `rederive` skill on that repo.** It quizzes me Socratically on why the project
+exists and how its structure and design decisions came about, so I can explain and defend what we built rather than
+only ship it. Say in one line why you're starting it, and skip it if I decline or I'm in the middle of something
+urgent. Point it at the repo we worked in (`/rederive <path>`), and let it run its own flow: it never explains the
+answer, and it writes only to that repo's `.rederive/`, which stays out of commits.
