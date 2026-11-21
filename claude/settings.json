@@ -1,6 +1,7 @@
 {
   "env": {
-    "SUDO_ASKPASS": "/home/quantumvik/.local/bin/claude-askpass"
+    "SUDO_ASKPASS": "/home/quantumvik/.local/bin/claude-askpass",
+    "CLAUDE_CODE_EXPERIMENTAL_CODE_MODE": "1"
   },
   "attribution": {
     "commit": "",
