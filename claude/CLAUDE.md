@@ -51,6 +51,28 @@ processes so lines reach the file at once, and include the `mkdir -p ~/.cache/<p
 logs outside the repo. Read them yourself with `grep` and `tail`, filtered to the lines the task needs, and
 don't paste tokens or request bodies from them into the chat.
 
+## "Tunnel" means a Cloudflare quick tunnel to my local Vault
+
+When I say "tunnel", "run the tunnel" or "give me the tunnel link", I mean a `cloudflared` quick tunnel that exposes
+the local Vault API (NimbusVaultBackend's gunicorn on `localhost:8000`) at a public `https://<words>.trycloudflare.com`
+address, so a frontend or a teammate off this machine can call my local backend. No Cloudflare account is needed.
+
+- **You start it yourself**, unlike my servers: check it isn't already running (`ps -eo pid,etime,args | grep
+  "[c]loudflared tunnel"`) and that something listens on 8000, then run it in tmux window `0:2` (named `tunnel`), so
+  Claude Code's low-memory clean-up can't kill it: `tmux send-keys -t "0:2" "mkdir -p ~/.cache/nimbus-logs &&
+  cloudflared tunnel --no-autoupdate --url http://localhost:8000 2>&1 | tee -a ~/.cache/nimbus-logs/cloudflared.log"
+  Enter`. If window 2 is missing, create it with `tmux new-window -t "0:" -n tunnel` (`-t 0` alone is read as an index).
+- **The link changes on every start.** Give me the newest one: `grep -o 'https://[a-z0-9-]*\.trycloudflare\.com'
+  ~/.cache/nimbus-logs/cloudflared.log | tail -1`, and check it with `curl` on `<link>/vault/health/app/` (expect 200).
+- **"Restart the tunnel":** Ctrl+C in window `0:2` (or kill the PID), start it again, and hand me the new link.
+  "Stop the tunnel": stop it and leave the window.
+- **Browsers need CORS.** My local `VaultSettings.json` has `cors_allowed_origins: ["*"]`, and my local
+  `NimbusVault/settings.py` allows every origin when the list holds `"*"`; both stay uncommitted. A browser "Network
+  Error" with only `OPTIONS` requests in `~/.cache/nimbus-logs/gunicorn.log` means its origin is blocked.
+- **Gunicorn doesn't auto-reload:** after a code change, `kill -HUP` the gunicorn master (the one whose parent is a zsh).
+- The link is public (still behind Vault auth: `Authorization: JWT <token>` and `Org: <tenant>`), so stop it when
+  I'm done with it.
+
 ## Subagents: you orchestrate, Cursor searches and reviews, your agents write code
 
 **Every session, coding or not, hands searching and exploring to `cursor` subagents: finding files or code,
