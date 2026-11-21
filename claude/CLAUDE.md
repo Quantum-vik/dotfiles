@@ -51,28 +51,20 @@ processes so lines reach the file at once, and include the `mkdir -p ~/.cache/<p
 logs outside the repo. Read them yourself with `grep` and `tail`, filtered to the lines the task needs, and
 don't paste tokens or request bodies from them into the chat.
 
-## Subagents: you orchestrate, Cursor searches and reviews (and writes code in work repos)
+## Subagents: you orchestrate, Cursor searches and reviews, your agents write code
 
 **Every session, coding or not, hands searching and exploring to `cursor` subagents: finding files or code,
 tracing how something works, checking a claim against a codebase, and web research. Don't run those sweeps
 yourself or through the Explore agent; a single lookup whose target you already know (one file, one grep) is
 fine to do directly.**
 
-There is a `cursor` subagent (`~/.claude/agents/cursor.md`) that hands a task to the Cursor CLI. It writes code
-only in **work repos**: `git remote get-url origin` is under `github.com/Nuva-Org/`. In every other repo (Quantum-vik,
-other owners, no remote) it is read-only and may only draft a small patch as text (below). For coding work, split
-it like this:
+There is a `cursor` subagent (`~/.claude/agents/cursor.md`) that hands a task to the Cursor CLI. It is read-only:
+**Cursor never writes code, not even a draft patch, in any repo: writing code burns too much of the team's Cursor
+usage. Use it for searching and reviewing only.** For coding work, split it like this:
 
 1. **Cursor agents do the searching.** Finding code, tracing callers, checking a claim against the codebase,
    fetching what a plan needs: brief a `cursor` agent (several in parallel when the areas are independent).
-2. **Who writes the code depends on the repo.**
-   - **Work repo (Nuva-Org):** a `cursor` agent may write the code in write mode. Hand it the plan and the
-     findings. It edits files but runs no shell commands, so your agent then reads the diff, runs the tests and
-     commits.
-   - **Personal repo (anything else):** Cursor never edits files. Your own subagents write the code. Small,
-     self-contained fixes (a guard, a clamp, one function) may be drafted by Cursor instead: ask mode, run from
-     an empty scratch folder with the findings and file contents pasted into the prompt, answering with a unified
-     diff. Your agent then applies the draft in the repo, checks it, tests it and commits it.
+2. **Your own subagents write the code.** Hand them the plan and the Cursor findings; they make the edits.
 3. **A Cursor agent reviews it, then the findings get fixed.** Send the written diff to a fresh `cursor` agent
    for review, and have the fixes made from what it reports.
 4. **You plan, put the results in order, and run the tests at the end.** You orchestrate: decide what to search,
@@ -81,8 +73,8 @@ it like this:
 Searching of any kind goes to Cursor, web research included (tell it to use web search). Anything that needs
 this conversation's context stays with your own subagents. Cursor runs on
 my company team account, so its usage shows on the team admin's dashboard (request counts, models, tokens,
-cost, time; not prompts or code on a Teams plan). Searching and reviewing a diff are allowed
-anywhere, personal repos included; writing code only in Nuva-Org repos. Keep it on Auto (`--model auto`): Cursor picks the model, and its
+cost, time; not prompts or code on a Teams plan). Both of its steps, searching and reviewing a diff, are allowed
+anywhere, personal repos included. Keep it on Auto (`--model auto`): Cursor picks the model, and its
 third-party picks (Claude, GPT…) draw on the team's API pool. When that pool is empty ("Your team has reached its
 usage limit"), rerun once on `grok-4.7-high`, a Cursor-pool model, and say so; never choose other named models.
 Keep requests lean (small workspace, focused questions, compact answers) but keep parallel web runs as they are.
