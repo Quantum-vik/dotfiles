@@ -85,7 +85,9 @@ There is a `cursor` subagent (`~/.claude/agents/cursor.md`) that hands a task to
 usage. Use it for searching and reviewing only.** For coding work, split it like this:
 
 1. **Cursor agents do the searching.** Finding code, tracing callers, checking a claim against the codebase,
-   fetching what a plan needs: brief a `cursor` agent (several in parallel when the areas are independent).
+   fetching what a plan needs: brief one well-scoped `cursor` agent. Every Cursor call is a fresh session that
+   rebuilds its context, so prefer one call that covers the question over several small ones; run two or three in
+   parallel only when the areas are independent and each is a substantial search.
 2. **Your own subagents write the code.** Hand them the plan and the Cursor findings; they make the edits.
 3. **A Cursor agent reviews it, then the findings get fixed.** Send the written diff to a fresh `cursor` agent
    for review, and have the fixes made from what it reports.
@@ -96,10 +98,11 @@ Searching of any kind goes to Cursor, web research included (tell it to use web 
 this conversation's context stays with your own subagents. Cursor runs on
 my company team account, so its usage shows on the team admin's dashboard (request counts, models, tokens,
 cost, time; not prompts or code on a Teams plan). Both of its steps, searching and reviewing a diff, are allowed
-anywhere, personal repos included. Keep it on Auto (`--model auto`): Cursor picks the model, and its
-third-party picks (Claude, GPT…) draw on the team's API pool. When that pool is empty ("Your team has reached its
-usage limit"), rerun once on `grok-4.7-high`, a Cursor-pool model, and say so; never choose other named models.
-Keep requests lean (small workspace, focused questions, compact answers) but keep parallel web runs as they are.
+anywhere, personal repos included. **Run it on `--model composer-2.5`, Cursor's own model, never `auto`:** Auto can
+route to third-party models (Claude, GPT…) that bill at full API price from the first request, while Composer 2.5
+draws on the seat's weekly pool. If it hits a usage limit ("Your team has reached its usage limit") or is
+unavailable, rerun once on `grok-4.7-high`, also a Cursor-pool model, and say so; never choose third-party models.
+Keep requests lean: smallest workspace, focused questions, compact answers, and as few calls as the task allows.
 
 **Web research is split by size: normal lookups go to the `openrouter` subagent, heavy or bigger research goes
 to Cursor.** Normal means a quick question with a short sourced answer (a fact, a release, a spec, a how-to);
